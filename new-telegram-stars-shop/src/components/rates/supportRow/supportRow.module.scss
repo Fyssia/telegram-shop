@@ -1,0 +1,229 @@
+.supportRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.paymentMethods {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-soft-color);
+  background: linear-gradient(to bottom, #13243a 0%, var(--color-blue20) 100%);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--box-shadow-soft);
+}
+
+.paymentMethods__titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paymentMethods__titleIcon {
+  color: var(--color-blue10);
+}
+
+.paymentMethods__title {
+  font-size: 21px;
+  font-weight: 760;
+  color: var(--color-white10);
+}
+
+.paymentMethods__note {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-gray-10);
+}
+
+.paymentMethods__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paymentMethods__card {
+  border-radius: var(--radius-lg);
+  border: var(--border);
+  background: rgba(15, 26, 43, 0.82);
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.paymentMethods__cardTop {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.paymentMethods__cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.paymentMethods__cardIcon--star {
+  color: var(--color-yellow10);
+}
+
+.paymentMethods__cardIcon--primary {
+  color: var(--color-blue10);
+}
+
+.paymentMethods__cardIcon--muted {
+  color: var(--color-white10);
+  opacity: 0.85;
+}
+
+.paymentMethods__cardTitle {
+  font-size: 16px;
+  font-weight: 740;
+  color: var(--color-white10);
+}
+
+.paymentMethods__cardDesc {
+  font-size: 14px;
+  font-weight: 520;
+  line-height: 1.52;
+  color: var(--color-gray-10);
+}
+
+.faqPreview {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-soft-color);
+  background: linear-gradient(to bottom, #14253d 0%, var(--color-blue30) 100%);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--box-shadow-soft);
+}
+
+.faqPreview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
+
+.faqPreview__titleLeft {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.faqPreview__titleIcon {
+  color: var(--color-yellow10);
+}
+
+.faqPreview__title {
+  font-size: 21px;
+  font-weight: 760;
+  color: var(--color-white10);
+}
+
+.faqPreview__link {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(55, 179, 244, 0.34);
+  background: rgba(14, 27, 45, 0.84);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-blue10);
+  transition:
+    border-color var(--motion-duration-base) var(--motion-ease-standard),
+    color var(--motion-duration-base) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover {
+    border-color: rgba(55, 179, 244, 0.56);
+    color: #69c7f8;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.faqPreview__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.faqPreview__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: var(--border);
+  background-color: #0f1a2b;
+  transition:
+    border-color var(--motion-duration-base) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover {
+    border-color: rgba(55, 179, 244, 0.44);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.faqPreview__itemText {
+  font-size: 15px;
+  font-weight: 660;
+  line-height: 1.35;
+  color: var(--color-white10);
+  min-width: 0;
+}
+
+.faqPreview__itemIcon {
+  flex: 0 0 auto;
+  color: var(--color-gray-10);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}

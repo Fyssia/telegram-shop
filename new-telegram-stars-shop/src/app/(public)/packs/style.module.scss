@@ -1,0 +1,29 @@
+.rates {
+  --container-padding: var(--layout-gutter);
+  --container-width: var(--layout-max-width);
+
+  background: radial-gradient(
+    135% 135% at 50% 12%,
+    #081e33 0%,
+    var(--color-blue20) 42%,
+    var(--color-background) 100%
+  );
+}
+
+.rates__content {
+  padding: clamp(44px, 6vw, var(--section-space)) var(--container-padding);
+
+  @media (max-width: 480px) {
+    padding: 64px var(--container-padding);
+  }
+}
+
+.rates__contentInner {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-inline: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

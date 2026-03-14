@@ -1,0 +1,356 @@
+.how {
+  scroll-margin-top: 96px;
+  padding: var(--section-space) var(--container-padding);
+  content-visibility: auto;
+  contain-intrinsic-size: 840px;
+
+  @media (max-width: 480px) {
+    padding-block: 64px;
+  }
+}
+
+.how__inner {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-inline: auto;
+}
+
+.how__row {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+
+  @media (max-width: 960px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+}
+
+.how__copy {
+  width: 520px;
+  max-width: 100%;
+
+  @media (max-width: 960px) {
+    width: 100%;
+  }
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.how__title {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 58px);
+  font-weight: 780;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--color-white10);
+
+  span {
+    display: block;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 30px;
+  }
+}
+
+.how__body {
+  margin: 0;
+  font-size: clamp(16px, 2.1vw, 20px);
+  font-weight: 400;
+  line-height: 1.58;
+  color: var(--color-gray-10);
+}
+
+.how__steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.how__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.how__stepNum {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  border: var(--border);
+  background-color: #0b1220;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-gray-10);
+
+  @media (max-width: 1440px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 14px;
+  }
+}
+
+.how__stepText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.how__stepTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-white10);
+
+  @media (max-width: 1440px) {
+    font-size: 17px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 16px;
+  }
+}
+
+.how__stepIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-blue10);
+}
+
+.how__stepIconStar {
+  width: 18px;
+  height: 18px;
+  color: var(--color-yellow10);
+}
+
+.how__stepSub {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--color-gray-10);
+
+  @media (max-width: 1440px) {
+    font-size: 15px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 14px;
+  }
+}
+
+.how__preview {
+  flex: 1;
+  min-width: 0;
+
+  height: 380px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft-color);
+  background-color: var(--color-blue20);
+  overflow: hidden;
+  box-shadow: var(--box-shadow-soft);
+}
+
+.how__previewTopbar {
+  height: 44px;
+  padding-inline: 16px;
+  border-bottom: 1px solid #1b2a3f;
+  background-color: var(--color-blue30);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.how__previewTopLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.how__previewTopIcon {
+  color: var(--color-blue10);
+}
+
+.how__previewTopTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-white10);
+}
+
+.how__previewTopTag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: var(--border);
+  background-color: rgba(42, 171, 238, 0.15);
+
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-blue10);
+}
+
+.how__previewTopRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.how__previewStatusIcon {
+  color: #a7f3d0;
+}
+
+.how__previewStatusText {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-gray-10);
+}
+
+.how__previewBody {
+  height: calc(360px - 44px);
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.how__rowIn {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.how__bubbleIn {
+  width: 340px;
+  max-width: 100%;
+  border-radius: 16px;
+  border: var(--border);
+  background-color: #0b1b2f;
+  padding: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.how__bubbleInTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-white10);
+}
+
+.how__bubbleInStar {
+  color: var(--color-yellow10);
+}
+
+.how__bubbleInSub {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-gray-10);
+}
+
+.how__rowOut {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.how__bubbleOut {
+  width: 320px;
+  max-width: 100%;
+  border-radius: 16px;
+  padding: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  background: linear-gradient(to bottom, var(--color-blue10) 0%, #1d8dd6 100%);
+}
+
+.how__bubbleOutTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-white);
+}
+
+.how__bubbleOutSub {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.how__receipt {
+  border-radius: 16px;
+  border: var(--border);
+  background-color: var(--color-blue30);
+  padding: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.how__receiptTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-white10);
+}
+
+.how__receiptIcon {
+  color: var(--color-gray-10);
+}
+
+.how__receiptRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.how__receiptLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-gray-10);
+}
+
+.how__receiptValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-white10);
+}
+
+.how__receiptTotal {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-white10);
+}

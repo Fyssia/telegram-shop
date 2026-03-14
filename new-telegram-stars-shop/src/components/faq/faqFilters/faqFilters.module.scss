@@ -1,0 +1,132 @@
+.faqFilters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.faqFilters__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 11px 13px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft-color);
+  background-color: #111d30;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+
+  &:focus-within {
+    border-color: rgba(55, 179, 244, 0.6);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.faqFilters__searchIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-gray-10);
+  flex: 0 0 auto;
+}
+
+.faqFilters__searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 540;
+  line-height: 1.2;
+  color: var(--color-white10);
+
+  &::placeholder {
+    color: var(--color-gray-10);
+    opacity: 1;
+  }
+
+  &::-webkit-search-decoration,
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-results-button,
+  &::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+  }
+}
+
+.faqFilters__chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.faqFilters__chips {
+  display: block;
+}
+
+.faqFilters__chip {
+  --chip-bg: #101a2d;
+  --chip-fg: rgba(245, 247, 250, 0.88);
+  --chip-icon: var(--color-gray-10);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  border: var(--border);
+  background-color: var(--chip-bg);
+  text-decoration: none;
+  transition:
+    border-color var(--motion-duration-base) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover {
+    border-color: rgba(55, 179, 244, 0.42);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.faqFilters__chip--active {
+  --chip-bg: rgba(55, 179, 244, 0.16);
+  --chip-fg: var(--color-blue10);
+  --chip-icon: var(--color-blue10);
+  border-color: rgba(55, 179, 244, 0.42);
+}
+
+.faqFilters__chipIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--chip-icon);
+  flex: 0 0 auto;
+}
+
+.faqFilters__chipText {
+  font-size: 14px;
+  font-weight: 720;
+  line-height: 1;
+  color: var(--chip-fg);
+}
+
+@media (max-width: 640px) {
+  .faqFilters__chipList {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .faqFilters__chip {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: 40px;
+  }
+}

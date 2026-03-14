@@ -1,0 +1,48 @@
+# Database config lives in application-db.yml.
+
+tg:
+  tdlib:
+    api-id: ${TG_TDLIB_API_ID:0}
+    api-hash: ${TG_TDLIB_API_HASH:}
+    session-dir: ${TG_TDLIB_SESSION_DIR:./tdlight-session}
+
+cryptobot:
+  testnet:
+    enabled: ${CRYPTOBOT_TESTNET_ENABLED:true}
+    token: ${CRYPTOBOT_TESTNET_TOKEN:55020:AABAAjLvSb4wpuotjLsKq6xiG7WYi8WVmC6}
+    base-url: ${CRYPTOBOT_TESTNET_BASE_URL:https://testnet-pay.crypt.bot/api}
+    provider-name: ${CRYPTOBOT_PROVIDER_NAME:cryptobot_testnet}
+    poll-delay-ms: ${CRYPTOBOT_POLL_DELAY_MS:5000}
+    poll-batch-size: ${CRYPTOBOT_POLL_BATCH_SIZE:100}
+    connect-timeout-ms: ${CRYPTOBOT_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${CRYPTOBOT_READ_TIMEOUT_MS:10000}
+
+tonwallet:
+  enabled: ${TON_WALLET_ENABLED:true}
+  provider-name: ${TON_WALLET_PROVIDER_NAME:ton_wallet}
+  recipient-address: ${TON_WALLET_RECIPIENT_ADDRESS:UQDIGhi7BWH-oFPfYzEUhmBrRthQplfB4Btl8qgkubcyz7EW}
+  network: ${TON_WALLET_NETWORK:-239}
+  usd-per-ton: ${TON_WALLET_USD_PER_TON:3.00}
+  payment-window-seconds: ${TON_WALLET_PAYMENT_WINDOW_SECONDS:900}
+  amount-nonce-max-nano: ${TON_WALLET_AMOUNT_NONCE_MAX_NANO:999999}
+  poll-delay-ms: ${TON_WALLET_POLL_DELAY_MS:5000}
+  poll-batch-size: ${TON_WALLET_POLL_BATCH_SIZE:100}
+  toncenter-base-url: ${TON_WALLET_TONCENTER_BASE_URL:https://toncenter.com/api/v2}
+  toncenter-api-key: ${TON_WALLET_TONCENTER_API_KEY:}
+  toncenter-tx-limit: ${TON_WALLET_TONCENTER_TX_LIMIT:50}
+  connect-timeout-ms: ${TON_WALLET_CONNECT_TIMEOUT_MS:5000}
+  read-timeout-ms: ${TON_WALLET_READ_TIMEOUT_MS:10000}
+
+fragment:
+  enabled: ${FRAGMENT_ENABLED:true}
+  local-api-url: ${FRAGMENT_LOCAL_API_URL:http://127.0.0.1:8080/api}
+  connect-timeout-ms: ${FRAGMENT_CONNECT_TIMEOUT_MS:10000}
+  read-timeout-ms: ${FRAGMENT_READ_TIMEOUT_MS:180000}
+
+app:
+  rate-limit:
+    enabled: ${APP_RATE_LIMIT_ENABLED:true}
+    invoice-per-minute: ${APP_RATE_LIMIT_INVOICE_PER_MINUTE:20}
+    username-check-per-minute: ${APP_RATE_LIMIT_USERNAME_CHECK_PER_MINUTE:120}
+    bucket-ttl-minutes: ${APP_RATE_LIMIT_BUCKET_TTL_MINUTES:60}
+    max-buckets: ${APP_RATE_LIMIT_MAX_BUCKETS:50000}

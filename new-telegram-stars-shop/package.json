@@ -1,0 +1,31 @@
+{
+  "name": "telegram-stars-shop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome check",
+    "format": "biome format --write"
+  },
+  "dependencies": {
+    "@ton-pay/api": "^0.3.0",
+    "@ton-pay/ui-react": "^0.3.0",
+    "@tonconnect/ui": "^2.4.1",
+    "@tonconnect/ui-react": "^2.4.1",
+    "next": "16.1.6",
+    "path-to-regexp": "^8.3.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "sass": "^1.97.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "typescript": "^5"
+  }
+}

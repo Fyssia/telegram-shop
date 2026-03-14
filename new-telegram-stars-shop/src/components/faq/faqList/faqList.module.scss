@@ -1,0 +1,128 @@
+.faqList {
+  display: block;
+}
+
+.faqList__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.faqList__item {
+  padding: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft-color);
+  background: #111d30;
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+
+  &[data-open="true"] {
+    border-color: rgba(55, 179, 244, 0.52);
+    background-color: rgba(13, 35, 59, 0.94);
+
+    .faqList__icon {
+      transform: rotate(45deg);
+      color: var(--color-blue10);
+    }
+  }
+}
+
+.faqList__question {
+  margin: 0;
+}
+
+.faqList__trigger {
+  width: 100%;
+  border: 0;
+  min-height: var(--tap-target-min);
+  padding: 16px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  &:active {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.faqList__questionText {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 730;
+  line-height: 1.4;
+  color: var(--color-white10);
+}
+
+.faqList__icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--color-gray-10);
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.faqList__answerWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.22s ease,
+    margin-top 0.22s ease,
+    opacity 0.22s ease;
+}
+
+.faqList__item[data-open="true"] .faqList__answerWrap {
+  grid-template-rows: 1fr;
+  margin-top: -2px;
+  opacity: 1;
+}
+
+.faqList__answerInner {
+  overflow: hidden;
+  padding: 0 16px;
+}
+
+.faqList__item[data-open="true"] .faqList__answerInner {
+  padding-bottom: 16px;
+}
+
+.faqList__answer {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 520;
+  line-height: 1.58;
+  color: var(--color-gray-10);
+}
+
+.faqList__empty {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft-color);
+  background-color: #111d30;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--color-gray-10);
+}

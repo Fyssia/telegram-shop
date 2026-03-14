@@ -1,0 +1,69 @@
+.safetyCard {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-soft-color);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: radial-gradient(
+      120% 120% at 70% 0%,
+      rgba(247, 203, 78, 0.08) 0%,
+      rgba(55, 179, 244, 0.09) 25%,
+      var(--color-blue20) 100%
+    ),
+    #111d30;
+  box-shadow: var(--box-shadow-soft);
+}
+
+.safetyCard__header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.safetyCard__icon {
+  color: var(--color-blue10);
+}
+
+.safetyCard__title {
+  font-size: 21px;
+  font-weight: 760;
+  line-height: 1.2;
+  color: var(--color-white10);
+}
+
+.safetyCard__desc {
+  font-size: 14px;
+  font-weight: 540;
+  line-height: 1.58;
+  color: var(--color-gray-10);
+}
+
+.safetyCard__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.safetyCard__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.safetyCard__itemIcon {
+  flex: 0 0 auto;
+  color: var(--color-yellow10);
+  margin-top: 2px;
+}
+
+.safetyCard__itemText {
+  font-size: 14px;
+  font-weight: 610;
+  line-height: 1.45;
+  color: var(--color-white10);
+  opacity: 0.94;
+}

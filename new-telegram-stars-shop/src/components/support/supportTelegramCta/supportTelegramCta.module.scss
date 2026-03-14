@@ -1,0 +1,82 @@
+.supportTelegramCta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: clamp(18px, 2.4vw, 26px);
+  border-radius: var(--radius-xl);
+  min-height: 146px;
+  background: linear-gradient(to right, #2f9fde 0%, #1b5d91 46%, #0a2a3a 100%);
+}
+
+.supportTelegramCta__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 760px;
+}
+
+.supportTelegramCta__title {
+  font-size: clamp(20px, 2.2vw, 25px);
+  font-weight: 780;
+  line-height: 1.2;
+  color: var(--color-white);
+}
+
+.supportTelegramCta__text {
+  font-size: 15px;
+  font-weight: 560;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.supportTelegramCta__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap-target-min);
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-white);
+  font-size: 15px;
+  font-weight: 760;
+  color: var(--color-blue10);
+  transition:
+    filter var(--motion-duration-base) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover {
+    filter: brightness(1.04);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.supportTelegramCta__buttonIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-blue10);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .supportTelegramCta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .supportTelegramCta__button {
+    width: 100%;
+  }
+}

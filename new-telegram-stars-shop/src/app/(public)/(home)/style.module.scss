@@ -1,0 +1,10 @@
+.home {
+  --container-padding: var(--layout-gutter);
+  --container-width: var(--layout-max-width);
+
+  background: radial-gradient(
+    100% 100% at 50% 0%,
+    #0a2a3a 0%,
+    var(--color-background) 100%
+  );
+}

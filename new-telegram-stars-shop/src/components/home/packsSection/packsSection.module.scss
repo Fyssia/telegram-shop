@@ -1,0 +1,260 @@
+.packs {
+  scroll-margin-top: 96px;
+  padding: var(--section-space) var(--container-padding);
+  content-visibility: auto;
+  contain-intrinsic-size: 760px;
+
+  @media (max-width: 480px) {
+    padding-block: 64px;
+  }
+}
+
+.packs__inner {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-inline: auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+
+  @media (max-width: 480px) {
+    gap: 24px;
+  }
+}
+
+.packs__title {
+  max-width: 860px;
+  text-align: center;
+  font-size: clamp(30px, 5vw, 58px);
+  font-weight: 780;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  color: var(--color-white10);
+}
+
+.packs__subtitle {
+  max-width: 720px;
+  text-align: center;
+  font-size: clamp(16px, 2.1vw, 20px);
+  font-weight: 400;
+  line-height: 1.58;
+  color: var(--color-gray-10);
+}
+
+.packs__grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.packs__card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft-color);
+  background: #0b1320;
+  padding: 24px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--box-shadow-soft);
+  transition:
+    border-color var(--motion-duration-base) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-base) var(--motion-ease-standard);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &:hover {
+    border-color: rgba(55, 179, 244, 0.54);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.packs__cardTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+  }
+}
+
+.packs__cardIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: var(--border);
+  display: grid;
+  place-items: center;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.packs__cardIcon--navy {
+  background-color: #0a182c;
+}
+
+.packs__cardIcon--dark {
+  background-color: #0b1b2f;
+}
+
+.packs__cardIcon--star {
+  color: var(--color-yellow10);
+}
+
+.packs__cardIcon--primary {
+  color: var(--color-blue10);
+}
+
+.packs__cardTitle {
+  flex: 1;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-white10);
+
+  @media (max-width: 1440px) {
+    font-size: 19px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 18px;
+  }
+}
+
+.packs__tag {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+
+  @media (max-width: 960px) {
+    font-size: 14px;
+  }
+}
+
+.packs__tag--muted {
+  background-color: #0b1b2f;
+  color: var(--color-gray-10);
+}
+
+.packs__tag--primary {
+  background-color: rgba(42, 171, 238, 0.15);
+  color: var(--color-blue10);
+}
+
+.packs__tag--star {
+  background-color: rgba(246, 201, 69, 0.12);
+  color: var(--color-yellow10);
+}
+
+.packs__priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+.packs__price {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 760;
+  color: var(--color-white10);
+
+  @media (max-width: 1440px) {
+    font-size: 30px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 28px;
+  }
+}
+
+.packs__bonus {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: var(--border);
+  background-color: #0b1b2f;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  @media (max-width: 960px) {
+    font-size: 14px;
+  }
+}
+
+.packs__bonus--muted {
+  color: var(--color-gray-10);
+}
+
+.packs__bonus--star {
+  color: var(--color-yellow10);
+}
+
+.packs__desc {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.58;
+  color: var(--color-gray-10);
+
+  @media (max-width: 1440px) {
+    font-size: 15px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 14px;
+  }
+}
+
+.packs__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  column-gap: 10px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-blue10);
+
+  @media (max-width: 1440px) {
+    font-size: 15px;
+  }
+
+  @media (max-width: 960px) {
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,28 @@
+.faq {
+  --container-padding: var(--layout-gutter);
+  --container-width: var(--layout-max-width);
+
+  background: radial-gradient(
+    120% 120% at 50% 0%,
+    #0a2a3a 0%,
+    var(--color-background) 100%
+  );
+}
+
+.faq__content {
+  padding: 0 var(--container-padding) var(--section-space);
+
+  @media (max-width: 480px) {
+    padding-bottom: 64px;
+  }
+}
+
+.faq__contentInner {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-inline: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
