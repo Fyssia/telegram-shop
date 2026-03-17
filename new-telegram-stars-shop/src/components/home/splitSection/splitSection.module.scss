@@ -75,10 +75,15 @@
   background: linear-gradient(to bottom, #102a42 0%, var(--color-blue30) 100%);
   padding: 24px;
   box-shadow: var(--box-shadow-soft);
+  min-width: 0;
 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
+  @media (max-width: 640px) {
+    padding: 16px;
+  }
 }
 
 .checkout__buyHeader {
@@ -92,6 +97,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
 }
 
 .checkout__buyTitleLeft {
@@ -112,6 +122,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 640px) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 .checkout__buyTitlePill {
@@ -120,6 +136,7 @@
   border-radius: 999px;
   border: var(--border);
   background-color: rgba(42, 171, 238, 0.15);
+  max-width: 100%;
 
   span {
     font-size: 14px;
@@ -313,10 +330,15 @@
   padding: 24px;
   background: #182a43;
   box-shadow: var(--box-shadow-soft);
+  min-width: 0;
 
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: 640px) {
+    padding: 16px;
+  }
 }
 
 .checkout__tgHeader {
@@ -324,6 +346,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
 }
 
 .checkout__tgHeaderLeft {
@@ -347,6 +374,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 640px) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 .checkout__tgHeaderPill {
@@ -355,6 +388,7 @@
   border-radius: 999px;
   border: var(--border);
   background-color: #0b1b2f;
+  max-width: 100%;
 
   span {
     font-size: 14px;
@@ -381,6 +415,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 
   @media (max-width: 960px) {
     flex-wrap: wrap;
@@ -401,6 +436,8 @@
 
   min-height: 46px;
   padding: 10px 16px;
+  min-width: 0;
+  max-width: 100%;
   border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 720;
@@ -434,6 +471,10 @@
   @media (max-width: 480px) {
     width: 100%;
   }
+
+  @media (max-width: 640px) {
+    white-space: normal;
+  }
 }
 
 .checkout__tgPrimaryBtn {
@@ -462,6 +503,7 @@
   border: var(--border);
   background-color: var(--color-blue50);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+  min-width: 0;
 }
 
 .checkout__phoneTop {
@@ -481,6 +523,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .checkout__phoneAvatar {
@@ -494,6 +537,10 @@
   font-size: 16px;
   font-weight: 800;
   color: var(--color-white);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .checkout__phoneTopRight {
@@ -527,6 +574,7 @@
   align-items: center;
   margin-left: auto;
   width: 60%;
+  max-width: 100%;
   gap: 8px;
   padding: 10px 14px;
   border-radius: 999px;
@@ -540,6 +588,7 @@
 
 .checkout__phonePill__text {
   font-size: 16px;
+  overflow-wrap: anywhere;
 }
 
 .checkout__phoneBubble {
@@ -615,6 +664,7 @@
   border: 1px solid var(--border-soft-color);
   background-color: #17283f;
   box-shadow: var(--box-shadow-soft);
+  min-width: 0;
 
   @media (max-width: 960px) {
     flex-direction: column;
@@ -628,6 +678,11 @@
     align-items: stretch;
     gap: 16px;
   }
+
+  @media (max-width: 640px) {
+    padding: 16px;
+    gap: 16px;
+  }
 }
 
 .checkout__referralCopy {
@@ -636,6 +691,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 .checkout__referralTitleRow {
@@ -685,6 +741,10 @@
   @media (max-width: 960px) {
     font-size: 14px;
   }
+
+  @media (max-width: 640px) {
+    white-space: normal;
+  }
 }
 
 .checkout__referralDesc {
@@ -701,6 +761,7 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+  min-width: 0;
 
   @media (max-width: 960px) {
     flex-wrap: wrap;
@@ -721,6 +782,8 @@
 
   min-height: 46px;
   padding: 10px 16px;
+  min-width: 0;
+  max-width: 100%;
   border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 760;
@@ -752,6 +815,11 @@
   }
 
   @media (max-width: 480px) {
+    width: 100%;
+    white-space: normal;
+  }
+
+  @media (max-width: 640px) {
     width: 100%;
     white-space: normal;
   }
@@ -793,15 +861,7 @@
   overflow: hidden;
 
   @media (max-width: 960px) {
-    width: 100%;
-    max-width: 360px;
-    height: auto;
-    aspect-ratio: 14 / 10;
-    margin-inline: auto;
-  }
-
-  @media (max-width: 480px) {
-    max-width: none;
+    display: none;
   }
 }
 

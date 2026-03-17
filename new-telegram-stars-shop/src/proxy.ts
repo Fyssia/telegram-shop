@@ -7,6 +7,8 @@ import {
 } from "@/i18n/routing";
 import { LANGUAGE_COOKIE } from "@/i18n/types";
 
+const INTERNAL_LOCALE_REWRITE_HEADER = "x-internal-locale-rewrite";
+
 function withLeadingSlash(pathname: string) {
   if (!pathname.startsWith("/")) {
     return `/${pathname}`;
@@ -30,6 +32,8 @@ function shouldBypassMiddleware(pathname: string) {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const localeMatch = stripLocalePrefix(pathname);
+  const isInternalLocaleRewrite =
+    request.headers.get(INTERNAL_LOCALE_REWRITE_HEADER) === "1";
 
   if (shouldBypassMiddleware(pathname)) {
     return NextResponse.next();
@@ -46,6 +50,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (!localeMatch.locale) {
+    // Prevent redirect loops for internally rewritten locale paths:
+    // /en -> rewrite(/) -> middleware runs again on / and must not redirect to /en again.
+    if (isInternalLocaleRewrite) {
+      return NextResponse.next();
+    }
+
     const locale = resolvePreferredLocale({
       cookieLocale: request.cookies.get(LANGUAGE_COOKIE)?.value,
       acceptLanguage: request.headers.get("accept-language"),
@@ -60,6 +70,7 @@ export function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(LOCALE_REQUEST_HEADER, localeMatch.locale);
+  requestHeaders.set(INTERNAL_LOCALE_REWRITE_HEADER, "1");
 
   const rewriteUrl = request.nextUrl.clone();
   rewriteUrl.pathname = withLeadingSlash(localeMatch.pathname);

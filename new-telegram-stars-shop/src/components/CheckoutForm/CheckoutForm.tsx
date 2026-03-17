@@ -69,6 +69,7 @@ type UsernameCheckStatus =
   | "typing"
   | "checking"
   | "valid"
+  | "already_premium"
   | "invalid"
   | "not_found"
   | "bot"
@@ -80,6 +81,7 @@ type UsernameCheckPayload = {
   status?: string;
   displayName?: string | null;
   avatarUrl?: string | null;
+  isPremium?: boolean | null;
 };
 
 type UsernameCheckCacheEntry = {
@@ -136,6 +138,7 @@ function normalizeUsername(value: string): string {
 
 function isInvalidUsernameStatus(status: UsernameCheckStatus): boolean {
   return (
+    status === "already_premium" ||
     status === "invalid" ||
     status === "not_found" ||
     status === "bot" ||
@@ -383,7 +386,7 @@ function getCachedUsernameCheck(
 
 function setCachedUsernameCheck(
   cache: Map<string, UsernameCheckCacheEntry>,
-  username: string,
+  cacheKey: string,
   payload: UsernameCheckPayload,
 ) {
   const now = Date.now();
@@ -394,8 +397,8 @@ function setCachedUsernameCheck(
     }
   }
 
-  if (cache.has(username)) {
-    cache.delete(username);
+  if (cache.has(cacheKey)) {
+    cache.delete(cacheKey);
   }
 
   while (cache.size >= USERNAME_CHECK_CACHE_MAX_SIZE) {
@@ -406,7 +409,7 @@ function setCachedUsernameCheck(
     cache.delete(oldestKey);
   }
 
-  cache.set(username, {
+  cache.set(cacheKey, {
     payload,
     expiresAt: now + USERNAME_CHECK_CACHE_TTL_MS,
   });
@@ -414,8 +417,6 @@ function setCachedUsernameCheck(
 
 export function CheckoutForm() {
   const router = useRouter();
-  const [tonConnectUI] = useTonConnectUI();
-  const tonWallet = useTonWallet();
   const { locale, messages } = useI18n();
   const searchParams = useSearchParams();
   const copy = messages.checkoutForm;
@@ -923,7 +924,26 @@ export function CheckoutForm() {
         return;
       }
 
+      if (backendStatus === "PREMIUM_CHECK_UNAVAILABLE") {
+        setCheckStatus("error");
+        setCheckMessage(copy.messages.premiumCheckUnavailable);
+        return;
+      }
+
       if (backendStatus === "USER" && data.ok) {
+        if (isPremiumCheckout) {
+          if (data.isPremium === true) {
+            setCheckStatus("already_premium");
+            setCheckMessage(copy.messages.usernameAlreadyPremium);
+            return;
+          }
+          if (data.isPremium !== false) {
+            setCheckStatus("error");
+            setCheckMessage(copy.messages.premiumCheckUnavailable);
+            return;
+          }
+        }
+
         setCheckStatus("valid");
         setCheckMessage("");
         return;
@@ -936,10 +956,13 @@ export function CheckoutForm() {
     },
     [
       copy.messages.invalidUsernameFormat,
+      copy.messages.premiumCheckUnavailable,
       copy.messages.requestFailedGeneric,
+      copy.messages.usernameAlreadyPremium,
       copy.messages.usernameIsBot,
       copy.messages.usernameNotFound,
       copy.messages.usernameNotUser,
+      isPremiumCheckout,
     ],
   );
 
@@ -1206,9 +1229,10 @@ export function CheckoutForm() {
       return;
     }
 
+    const cacheKey = `${u}|premium:${isPremiumCheckout ? "1" : "0"}`;
     const cachedPayload = getCachedUsernameCheck(
       usernameCheckCacheRef.current,
-      u,
+      cacheKey,
     );
     if (cachedPayload) {
       applyUsernameCheckPayload(cachedPayload);
@@ -1224,7 +1248,10 @@ export function CheckoutForm() {
         const res = await fetch("/api/tg/username/check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: u }),
+          body: JSON.stringify({
+            username: u,
+            checkPremium: isPremiumCheckout,
+          }),
           signal: controller.signal,
         });
 
@@ -1259,7 +1286,7 @@ export function CheckoutForm() {
           throw new Error("Invalid JSON response");
         }
 
-        setCachedUsernameCheck(usernameCheckCacheRef.current, u, data);
+        setCachedUsernameCheck(usernameCheckCacheRef.current, cacheKey, data);
         applyUsernameCheckPayload(data);
       } catch (e: unknown) {
         if (e instanceof DOMException && e.name === "AbortError") return; // отменили предыдущий запрос — это нормально
@@ -1274,7 +1301,7 @@ export function CheckoutForm() {
       clearTimeout(t);
       controller.abort();
     };
-  }, [applyUsernameCheckPayload, copy, username]);
+  }, [applyUsernameCheckPayload, copy, isPremiumCheckout, username]);
 
   const percent = useMemo(() => {
     const clamped = Math.min(max, Math.max(min, amount));

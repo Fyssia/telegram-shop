@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteTitle =
     typeof metadata.site.title === "string"
       ? metadata.site.title
-      : "Telegram Stars";
+      : "Quack Stars";
   const siteDescription =
     typeof metadata.site.description === "string"
       ? metadata.site.description
@@ -45,6 +45,10 @@ export async function generateMetadata(): Promise<Metadata> {
         "max-snippet": -1,
         "max-video-preview": -1,
       },
+    },
+    icons: {
+      icon: [{ url: "/logo-mark.svg", type: "image/svg+xml" }],
+      shortcut: "/logo-mark.svg",
     },
     openGraph: {
       type: "website",

@@ -18,6 +18,6 @@ public class TelegramUsernameController {
 
     @PostMapping("/username/check")
     public UsernameCheckResponse check(@Valid @RequestBody UsernameCheckRequest req) {
-        return service.check(req.username());
+        return service.check(req.username(), req.isPremiumCheckRequested());
     }
 }

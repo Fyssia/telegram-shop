@@ -4,12 +4,16 @@ import com.example.telegram_shop_stars.dto.UsernameCheckResponse;
 import it.tdlight.client.TelegramError;
 import it.tdlight.jni.TdApi;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TelegramUsernameServiceTest {
 
@@ -218,6 +222,122 @@ class TelegramUsernameServiceTest {
 
         assertThat(response.ok()).isTrue();
         assertThat(response.status()).isEqualTo("NOT_A_USER");
+    }
+
+    @Test
+    void shouldReturnIsPremiumWhenPremiumCheckRequested() throws Exception {
+        StubTdlibClient tdlib = new StubTdlibClient(fn -> {
+            if (fn instanceof TdApi.SearchPublicChat) {
+                TdApi.Chat chat = new TdApi.Chat();
+                chat.type = new TdApi.ChatTypePrivate(42L);
+                chat.title = "Fyssia";
+                return chat;
+            }
+            if (fn instanceof TdApi.GetUser) {
+                TdApi.User user = new TdApi.User();
+                user.firstName = "Fyssia";
+                user.type = new TdApi.UserTypeRegular();
+                user.isPremium = true;
+                return user;
+            }
+            return null;
+        });
+        TelegramUsernameService service = new TelegramUsernameService(tdlib);
+
+        UsernameCheckResponse response = service.check("fyssia", true);
+
+        assertThat(response.ok()).isTrue();
+        assertThat(response.status()).isEqualTo("USER");
+        assertThat(response.isPremium()).isTrue();
+    }
+
+    @Test
+    void shouldReturnPremiumCheckUnavailableWhenTdlibNotConfigured() {
+        TdlibClient tdlib = new TdlibClient(new TdlibProps(0, "", "./tdlight-session-test"));
+        TelegramUsernameService service = new TelegramUsernameService(tdlib);
+
+        UsernameCheckResponse response = service.check("fyssia", true);
+
+        assertThat(response.ok()).isFalse();
+        assertThat(response.status()).isEqualTo("PREMIUM_CHECK_UNAVAILABLE");
+        assertThat(response.isPremium()).isNull();
+    }
+
+    @Test
+    void shouldRejectPremiumGiftWhenRecipientAlreadyHasPremium() throws Exception {
+        StubTdlibClient tdlib = new StubTdlibClient(fn -> {
+            if (fn instanceof TdApi.SearchPublicChat) {
+                TdApi.Chat chat = new TdApi.Chat();
+                chat.type = new TdApi.ChatTypePrivate(42L);
+                chat.title = "Fyssia";
+                return chat;
+            }
+            if (fn instanceof TdApi.GetUser) {
+                TdApi.User user = new TdApi.User();
+                user.firstName = "Fyssia";
+                user.type = new TdApi.UserTypeRegular();
+                user.isPremium = true;
+                return user;
+            }
+            return null;
+        });
+        TelegramUsernameService service = new TelegramUsernameService(tdlib);
+
+        assertThatThrownBy(() -> service.assertPremiumGiftAllowed("fyssia"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(error -> {
+                    ResponseStatusException exception = (ResponseStatusException) error;
+                    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+                });
+    }
+
+    @Test
+    void shouldRetryGetUserForPremiumCheck() throws Exception {
+        AtomicInteger getUserCalls = new AtomicInteger();
+        StubTdlibClient tdlib = new StubTdlibClient(fn -> {
+            if (fn instanceof TdApi.SearchPublicChat) {
+                TdApi.Chat chat = new TdApi.Chat();
+                chat.type = new TdApi.ChatTypePrivate(42L);
+                chat.title = "Fyssia";
+                return chat;
+            }
+            if (fn instanceof TdApi.GetUser) {
+                if (getUserCalls.incrementAndGet() == 1) {
+                    throw new TimeoutException("first call timeout");
+                }
+                TdApi.User user = new TdApi.User();
+                user.firstName = "Fyssia";
+                user.type = new TdApi.UserTypeRegular();
+                user.isPremium = false;
+                return user;
+            }
+            return null;
+        });
+        TelegramUsernameService service = new TelegramUsernameService(tdlib);
+
+        UsernameCheckResponse response = service.check("fyssia", true);
+
+        assertThat(response.ok()).isTrue();
+        assertThat(response.status()).isEqualTo("USER");
+        assertThat(response.isPremium()).isFalse();
+        assertThat(getUserCalls.get()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldNotUseTdlibForRegularCheckWhenPublicChecksDisabled() {
+        TdlibClient tdlib = new TdlibClient(new TdlibProps(1, "hash", "./tdlight-session-test", "", false));
+        TelegramUsernameService service = new TelegramUsernameService(tdlib) {
+            @Override
+            protected UsernameCheckResponse lookupViaPublicPage(String username) {
+                return null;
+            }
+        };
+
+        UsernameCheckResponse response = service.check("fyssia");
+
+        assertThat(response.ok()).isFalse();
+        assertThat(response.status()).isEqualTo("ERROR");
+        assertThat(response.displayName()).isEqualTo("Username lookup backend is unavailable");
     }
 
     private static final class StubTdlibClient extends TdlibClient {

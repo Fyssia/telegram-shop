@@ -14,6 +14,7 @@ import com.example.telegram_shop_stars.repository.CustomerRepository;
 import com.example.telegram_shop_stars.repository.OrderRepository;
 import com.example.telegram_shop_stars.repository.OrderStatusHistoryRepository;
 import com.example.telegram_shop_stars.repository.PaymentRepository;
+import com.example.telegram_shop_stars.service.TelegramUsernameService;
 import com.example.telegram_shop_stars.service.fragment.FragmentApiClient;
 import com.example.telegram_shop_stars.service.fragment.FragmentApiException;
 import com.example.telegram_shop_stars.service.tonwallet.TonWalletBlockchainClient.TonWalletBlockchainException;
@@ -93,6 +94,7 @@ public class TonWalletPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final FragmentApiClient fragmentApiClient;
+    private final TelegramUsernameService telegramUsernameService;
     private final TonWalletProperties properties;
     private final TonWalletBlockchainClient blockchainClient;
     private final TransactionTemplate txTemplate;
@@ -109,6 +111,7 @@ public class TonWalletPaymentService {
                                    PaymentRepository paymentRepository,
                                    OrderStatusHistoryRepository orderStatusHistoryRepository,
                                    FragmentApiClient fragmentApiClient,
+                                   TelegramUsernameService telegramUsernameService,
                                    TonWalletProperties properties,
                                    TonWalletBlockchainClient blockchainClient,
                                    PlatformTransactionManager transactionManager,
@@ -118,6 +121,7 @@ public class TonWalletPaymentService {
         this.paymentRepository = paymentRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.fragmentApiClient = fragmentApiClient;
+        this.telegramUsernameService = telegramUsernameService;
         this.properties = properties;
         this.blockchainClient = blockchainClient;
         this.txTemplate = new TransactionTemplate(transactionManager);
@@ -247,6 +251,9 @@ public class TonWalletPaymentService {
             if (existingOrder != null) {
                 return existingOrder.getId();
             }
+        }
+        if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod)) {
+            telegramUsernameService.assertPremiumGiftAllowed(normalizedUsername);
         }
 
         OrderEntity order = new OrderEntity();

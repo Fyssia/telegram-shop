@@ -14,6 +14,7 @@ import com.example.telegram_shop_stars.repository.CustomerRepository;
 import com.example.telegram_shop_stars.repository.OrderRepository;
 import com.example.telegram_shop_stars.repository.OrderStatusHistoryRepository;
 import com.example.telegram_shop_stars.repository.PaymentRepository;
+import com.example.telegram_shop_stars.service.TelegramUsernameService;
 import com.example.telegram_shop_stars.service.fragment.FragmentApiClient;
 import com.example.telegram_shop_stars.service.fragment.FragmentApiException;
 import io.micrometer.core.instrument.Counter;
@@ -84,6 +85,7 @@ public class CryptoBotPaymentService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final CryptoBotApiClient apiClient;
     private final FragmentApiClient fragmentApiClient;
+    private final TelegramUsernameService telegramUsernameService;
     private final CryptoBotTestnetProperties properties;
     private final TransactionTemplate txTemplate;
     private final Counter invoiceCreateRequests;
@@ -98,6 +100,7 @@ public class CryptoBotPaymentService {
                                    OrderStatusHistoryRepository orderStatusHistoryRepository,
                                    CryptoBotApiClient apiClient,
                                    FragmentApiClient fragmentApiClient,
+                                   TelegramUsernameService telegramUsernameService,
                                    CryptoBotTestnetProperties properties,
                                    PlatformTransactionManager transactionManager,
                                    MeterRegistry meterRegistry) {
@@ -107,6 +110,7 @@ public class CryptoBotPaymentService {
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.apiClient = apiClient;
         this.fragmentApiClient = fragmentApiClient;
+        this.telegramUsernameService = telegramUsernameService;
         this.properties = properties;
         this.txTemplate = new TransactionTemplate(transactionManager);
         this.invoiceCreateRequests = meterRegistry.counter("cryptobot.invoice.create.requests");
@@ -248,6 +252,9 @@ public class CryptoBotPaymentService {
             if (existingOrder != null) {
                 return existingOrder.getId();
             }
+        }
+        if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod)) {
+            telegramUsernameService.assertPremiumGiftAllowed(normalizedUsername);
         }
 
         OrderEntity order = new OrderEntity();

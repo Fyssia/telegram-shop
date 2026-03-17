@@ -6,6 +6,10 @@ import jakarta.validation.constraints.Size;
 public record UsernameCheckRequest(
         @NotBlank
         @Size(max = 64)
-        String username
+        String username,
+        Boolean checkPremium
 ) {
+    public boolean isPremiumCheckRequested() {
+        return Boolean.TRUE.equals(checkPremium);
+    }
 }

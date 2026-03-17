@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const APP_NAME =
-  process.env.NEXT_PUBLIC_TONCONNECT_APP_NAME?.trim() || "Telegram Stars Shop";
+  process.env.NEXT_PUBLIC_TONCONNECT_APP_NAME?.trim() || "Quack Stars";
 const ICON_PATH =
   process.env.NEXT_PUBLIC_TONCONNECT_ICON_PATH?.trim() || "/logo-mark.svg";
 const TERMS_PATH =

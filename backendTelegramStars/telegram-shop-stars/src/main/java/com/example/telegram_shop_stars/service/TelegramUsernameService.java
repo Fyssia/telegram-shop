@@ -3,7 +3,11 @@ package com.example.telegram_shop_stars.service;
 import com.example.telegram_shop_stars.dto.UsernameCheckResponse;
 import it.tdlight.client.TelegramError;
 import it.tdlight.jni.TdApi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.HtmlUtils;
 
 import java.net.URI;
@@ -17,6 +21,7 @@ import java.util.regex.Pattern;
 
 @Service
 public class TelegramUsernameService {
+    private static final Logger log = LoggerFactory.getLogger(TelegramUsernameService.class);
 
     private static final Pattern USERNAME_RE = Pattern.compile("^[a-z0-9_]{5,32}$");
     private static final Pattern HTML_TITLE_RE = Pattern.compile("<title>(.*?)</title>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -35,9 +40,13 @@ public class TelegramUsernameService {
 
     private static final Duration SEARCH_TIMEOUT = Duration.ofSeconds(6);
     private static final Duration GET_USER_TIMEOUT = Duration.ofSeconds(4);
+    private static final Duration GET_USER_PREMIUM_TIMEOUT = Duration.ofSeconds(8);
+    private static final int PREMIUM_GET_USER_MAX_ATTEMPTS = 2;
     private static final Duration PUBLIC_LOOKUP_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration PUBLIC_CACHE_TTL = Duration.ofSeconds(30);
+    private static final Duration PREMIUM_CACHE_TTL = Duration.ofSeconds(20);
     private static final int PUBLIC_CACHE_MAX_SIZE = 10_000;
+    private static final int PREMIUM_CACHE_MAX_SIZE = 5_000;
 
     private static final HttpClient PUBLIC_HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(2))
@@ -46,15 +55,48 @@ public class TelegramUsernameService {
 
     private final TdlibClient tdlib;
     private final ConcurrentHashMap<String, CachedLookup> publicLookupCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CachedLookup> premiumLookupCache = new ConcurrentHashMap<>();
 
     public TelegramUsernameService(TdlibClient tdlib) {
         this.tdlib = tdlib;
     }
 
     public UsernameCheckResponse check(String raw) {
+        return check(raw, false);
+    }
+
+    public UsernameCheckResponse check(String raw, boolean requirePremiumStatus) {
         String u = normalize(raw);
         if (u.isEmpty() || !USERNAME_RE.matcher(u).matches()) {
             return UsernameCheckResponse.invalid(u);
+        }
+
+        if (requirePremiumStatus) {
+            UsernameCheckResponse cachedPremium = getCachedPremiumLookup(u);
+            if (cachedPremium != null) {
+                return cachedPremium;
+            }
+
+            if (!tdlib.isConfigured()) {
+                log.warn(
+                        "Premium check requested for username=@{} but TDLib is not configured (TG_TDLIB_API_ID/TG_TDLIB_API_HASH)",
+                        u
+                );
+                return new UsernameCheckResponse(
+                        false,
+                        "PREMIUM_CHECK_UNAVAILABLE",
+                        u,
+                        "TDLib is not configured",
+                        null,
+                        null
+                );
+            }
+
+            UsernameCheckResponse tdlibPremiumResult = lookupViaTdlib(u, true);
+            if (isPremiumLookupCacheable(tdlibPremiumResult)) {
+                cachePremiumLookup(u, tdlibPremiumResult);
+            }
+            return tdlibPremiumResult;
         }
 
         UsernameCheckResponse cachedPublic = getCachedPublicLookup(u);
@@ -68,36 +110,88 @@ public class TelegramUsernameService {
             return publicResult;
         }
 
-        if (!tdlib.isConfigured()) {
+        if (!tdlib.isEnabledForPublicChecks()) {
             return new UsernameCheckResponse(
                     false,
                     "ERROR",
                     u,
-                    "Username lookup backend is not configured",
+                    "Username lookup backend is unavailable",
+                    null,
                     null
             );
         }
 
-        // fallback: TDLib
-        String avatarUrl = avatarUrlFor(u);
+        return lookupViaTdlib(u, false);
+    }
+
+    public void assertPremiumGiftAllowed(String rawUsername) {
+        UsernameCheckResponse response = check(rawUsername, true);
+
+        switch (response.status()) {
+            case "USER" -> {
+                if (Boolean.FALSE.equals(response.isPremium())) {
+                    return;
+                }
+                if (Boolean.TRUE.equals(response.isPremium())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Recipient already has Telegram Premium");
+                }
+                throw new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Unable to verify recipient Telegram Premium status"
+                );
+            }
+            case "INVALID" -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "username must match ^[a-z0-9_]{5,32}$"
+            );
+            case "NOT_FOUND" -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telegram username was not found");
+            case "BOT" -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bots cannot receive Telegram Premium gifts");
+            case "NOT_A_USER" -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only personal Telegram accounts can receive Premium gifts"
+            );
+            case "PREMIUM_CHECK_UNAVAILABLE" -> throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Unable to verify recipient Telegram Premium status"
+            );
+            default -> throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Unable to verify recipient Telegram Premium status"
+            );
+        }
+    }
+
+    private UsernameCheckResponse lookupViaTdlib(String username, boolean requirePremiumStatus) {
+        String avatarUrl = avatarUrlFor(username);
 
         try {
-            TdApi.Chat chat = tdlib.send(new TdApi.SearchPublicChat(u), SEARCH_TIMEOUT);
-
+            TdApi.Chat chat = tdlib.send(new TdApi.SearchPublicChat(username), SEARCH_TIMEOUT);
             if (!(chat.type instanceof TdApi.ChatTypePrivate priv)) {
-                return UsernameCheckResponse.channelOrGroup(u);
+                return UsernameCheckResponse.channelOrGroup(username);
             }
 
             String fallbackName = normalizeDisplayName(chat.title);
-
             TdApi.User user;
             try {
-                user = tdlib.send(new TdApi.GetUser(priv.userId), GET_USER_TIMEOUT);
+                user = fetchUserForCheck(priv.userId, username, requirePremiumStatus);
             } catch (Exception userLookupError) {
-                if (fallbackName != null) {
-                    return UsernameCheckResponse.user(u, fallbackName, avatarUrl);
+                Throwable userRoot = rootCause(userLookupError);
+                if (isNotFound(userRoot)) {
+                    return UsernameCheckResponse.notFound(username);
                 }
-                throw userLookupError;
+                if (!requirePremiumStatus && fallbackName != null) {
+                    return UsernameCheckResponse.user(username, fallbackName, avatarUrl);
+                }
+                if (requirePremiumStatus) {
+                    log.warn(
+                            "TDLib GetUser failed for premium check username=@{}: {}",
+                            username,
+                            compactError(userRoot)
+                    );
+                }
+                return requirePremiumStatus
+                        ? UsernameCheckResponse.premiumCheckUnavailable(username)
+                        : new UsernameCheckResponse(false, "ERROR", username, errorMessage(userRoot), null, null);
             }
 
             String name = joinName(user.firstName, user.lastName);
@@ -106,18 +200,60 @@ public class TelegramUsernameService {
             }
 
             if (user.type instanceof TdApi.UserTypeBot) {
-                return UsernameCheckResponse.bot(u, name, avatarUrl);
+                return UsernameCheckResponse.bot(username, name, avatarUrl);
             }
 
-            return UsernameCheckResponse.user(u, name, avatarUrl);
-
+            return UsernameCheckResponse.user(
+                    username,
+                    name,
+                    avatarUrl,
+                    requirePremiumStatus ? user.isPremium : null
+            );
         } catch (Exception e) {
             Throwable root = rootCause(e);
             if (isNotFound(root)) {
-                return UsernameCheckResponse.notFound(u);
+                return UsernameCheckResponse.notFound(username);
             }
-            return new UsernameCheckResponse(false, "ERROR", u, errorMessage(root), null);
+            if (requirePremiumStatus) {
+                log.warn(
+                        "TDLib lookup failed for premium check username=@{}: {}",
+                        username,
+                        compactError(root)
+                );
+                return UsernameCheckResponse.premiumCheckUnavailable(username);
+            }
+            return new UsernameCheckResponse(false, "ERROR", username, errorMessage(root), null, null);
         }
+    }
+
+    private TdApi.User fetchUserForCheck(long userId, String username, boolean requirePremiumStatus) throws Exception {
+        if (!requirePremiumStatus) {
+            return tdlib.send(new TdApi.GetUser(userId), GET_USER_TIMEOUT);
+        }
+
+        Exception lastError = null;
+        for (int attempt = 1; attempt <= PREMIUM_GET_USER_MAX_ATTEMPTS; attempt++) {
+            try {
+                return tdlib.send(new TdApi.GetUser(userId), GET_USER_PREMIUM_TIMEOUT);
+            } catch (Exception ex) {
+                lastError = ex;
+                Throwable root = rootCause(ex);
+                if (isNotFound(root)) {
+                    throw ex;
+                }
+                if (attempt < PREMIUM_GET_USER_MAX_ATTEMPTS) {
+                    log.warn(
+                            "TDLib GetUser attempt {}/{} failed for premium check username=@{}: {}",
+                            attempt,
+                            PREMIUM_GET_USER_MAX_ATTEMPTS,
+                            username,
+                            compactError(root)
+                    );
+                }
+            }
+        }
+
+        throw lastError == null ? new IllegalStateException("TDLib GetUser failed") : lastError;
     }
 
     private static String avatarUrlFor(String username) {
@@ -207,6 +343,23 @@ public class TelegramUsernameService {
         publicLookupCache.put(username, new CachedLookup(response, expiresAtMillis));
     }
 
+    private UsernameCheckResponse getCachedPremiumLookup(String username) {
+        CachedLookup cached = premiumLookupCache.get(username);
+        if (cached == null) return null;
+
+        if (cached.expiresAtMillis() < System.currentTimeMillis()) {
+            premiumLookupCache.remove(username, cached);
+            return null;
+        }
+        return cached.response();
+    }
+
+    private void cachePremiumLookup(String username, UsernameCheckResponse response) {
+        evictPremiumCacheIfNeeded();
+        long expiresAtMillis = System.currentTimeMillis() + PREMIUM_CACHE_TTL.toMillis();
+        premiumLookupCache.put(username, new CachedLookup(response, expiresAtMillis));
+    }
+
     private void evictPublicCacheIfNeeded() {
         if (publicLookupCache.size() < PUBLIC_CACHE_MAX_SIZE) {
             return;
@@ -223,6 +376,31 @@ public class TelegramUsernameService {
         if (keys.hasMoreElements()) {
             publicLookupCache.remove(keys.nextElement());
         }
+    }
+
+    private void evictPremiumCacheIfNeeded() {
+        if (premiumLookupCache.size() < PREMIUM_CACHE_MAX_SIZE) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        premiumLookupCache.entrySet().removeIf(entry -> entry.getValue().expiresAtMillis() < now);
+
+        if (premiumLookupCache.size() < PREMIUM_CACHE_MAX_SIZE) {
+            return;
+        }
+
+        var keys = premiumLookupCache.keys();
+        if (keys.hasMoreElements()) {
+            premiumLookupCache.remove(keys.nextElement());
+        }
+    }
+
+    private static boolean isPremiumLookupCacheable(UsernameCheckResponse response) {
+        return switch (response.status()) {
+            case "USER", "NOT_FOUND", "BOT", "NOT_A_USER" -> true;
+            default -> false;
+        };
     }
 
     static UsernameCheckResponse parsePublicPage(String username, String html) {
@@ -359,6 +537,14 @@ public class TelegramUsernameService {
 
     private static String normalizeMessage(String raw) {
         return raw == null ? "" : raw.trim();
+    }
+
+    private static String compactError(Throwable error) {
+        String message = errorMessage(error).replaceAll("\\s+", " ").trim();
+        if (message.length() <= 180) {
+            return message;
+        }
+        return message.substring(0, 177) + "...";
     }
 
     private record CachedLookup(UsernameCheckResponse response, long expiresAtMillis) {}

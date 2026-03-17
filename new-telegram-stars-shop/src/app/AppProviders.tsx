@@ -17,10 +17,8 @@ export function AppProviders({
   messages,
 }: AppProvidersProps) {
   return (
-    <TonProvider>
-      <I18nProvider initialLocale={locale} initialMessages={messages}>
-        {children}
-      </I18nProvider>
-    </TonProvider>
+    <I18nProvider initialLocale={locale} initialMessages={messages}>
+      {children}
+    </I18nProvider>
   );
 }

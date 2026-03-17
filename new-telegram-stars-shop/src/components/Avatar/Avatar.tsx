@@ -17,6 +17,7 @@ type CheckStatus =
   | "typing"
   | "checking"
   | "valid"
+  | "already_premium"
   | "invalid"
   | "not_found"
   | "bot"

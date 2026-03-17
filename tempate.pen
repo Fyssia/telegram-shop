@@ -88,7 +88,7 @@
                       "id": "logoText",
                       "name": "Logo",
                       "fill": "$--foreground",
-                      "content": "Telegram Stars",
+                      "content": "Quack Stars",
                       "fontFamily": "$--font-primary",
                       "fontSize": 17,
                       "fontWeight": "600"
@@ -425,7 +425,7 @@
                           "fill": "$--foreground",
                           "textGrowth": "fixed-width",
                           "width": 1040,
-                          "content": "Buy Telegram Stars",
+                          "content": "Buy Quack Stars",
                           "lineHeight": 1.05,
                           "textAlign": "center",
                           "fontFamily": "$--font-primary",
@@ -849,7 +849,7 @@
                                   "type": "text",
                                   "id": "buyTitleText",
                                   "fill": "$--foreground",
-                                  "content": "Buy Telegram Stars",
+                                  "content": "Buy Quack Stars",
                                   "fontFamily": "$--font-primary",
                                   "fontSize": 24,
                                   "fontWeight": "800"
@@ -3904,7 +3904,7 @@
                           "type": "text",
                           "id": "footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -4331,7 +4331,7 @@
                   "type": "text",
                   "id": "footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -4807,7 +4807,7 @@
                   "id": "ratesLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -8403,7 +8403,7 @@
                           "type": "text",
                           "id": "ratesFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -8830,7 +8830,7 @@
                   "type": "text",
                   "id": "ratesFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -9012,7 +9012,7 @@
                   "id": "howLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -10551,7 +10551,7 @@
                           "type": "text",
                           "id": "howFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -10978,7 +10978,7 @@
                   "type": "text",
                   "id": "howFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -11155,7 +11155,7 @@
                   "id": "faqLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -12081,7 +12081,7 @@
                           "type": "text",
                           "id": "faqFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -12508,7 +12508,7 @@
                   "type": "text",
                   "id": "faqFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -12690,7 +12690,7 @@
                   "id": "supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -13715,7 +13715,7 @@
                           "type": "text",
                           "id": "supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -14142,7 +14142,7 @@
                   "type": "text",
                   "id": "supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -14327,7 +14327,7 @@
                       "id": "landing_1920_logoText",
                       "name": "Logo",
                       "fill": "$--foreground",
-                      "content": "Telegram Stars",
+                      "content": "Quack Stars",
                       "fontFamily": "$--font-primary",
                       "fontSize": 20,
                       "fontWeight": "600"
@@ -14664,7 +14664,7 @@
                           "fill": "$--foreground",
                           "textGrowth": "fixed-width",
                           "width": 1200,
-                          "content": "Buy Telegram Stars",
+                          "content": "Buy Quack Stars",
                           "lineHeight": 1.05,
                           "textAlign": "center",
                           "fontFamily": "$--font-primary",
@@ -15088,7 +15088,7 @@
                                   "type": "text",
                                   "id": "landing_1920_buyTitleText",
                                   "fill": "$--foreground",
-                                  "content": "Buy Telegram Stars",
+                                  "content": "Buy Quack Stars",
                                   "fontFamily": "$--font-primary",
                                   "fontSize": 22,
                                   "fontWeight": "800"
@@ -18143,7 +18143,7 @@
                           "type": "text",
                           "id": "landing_1920_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -18570,7 +18570,7 @@
                   "type": "text",
                   "id": "landing_1920_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -18751,7 +18751,7 @@
                   "id": "pageRates_1920_ratesLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -22347,7 +22347,7 @@
                           "type": "text",
                           "id": "pageRates_1920_ratesFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -22774,7 +22774,7 @@
                   "type": "text",
                   "id": "pageRates_1920_ratesFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -22956,7 +22956,7 @@
                   "id": "pageHowItWorks_1920_howLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -24495,7 +24495,7 @@
                           "type": "text",
                           "id": "pageHowItWorks_1920_howFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -24922,7 +24922,7 @@
                   "type": "text",
                   "id": "pageHowItWorks_1920_howFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -25099,7 +25099,7 @@
                   "id": "pageFAQ_1920_faqLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -26025,7 +26025,7 @@
                           "type": "text",
                           "id": "pageFAQ_1920_faqFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -26452,7 +26452,7 @@
                   "type": "text",
                   "id": "pageFAQ_1920_faqFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -26634,7 +26634,7 @@
                   "id": "pageSupport_1920_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -27659,7 +27659,7 @@
                           "type": "text",
                           "id": "pageSupport_1920_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -28086,7 +28086,7 @@
                   "type": "text",
                   "id": "pageSupport_1920_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -28271,7 +28271,7 @@
                       "id": "landing_960_logoText",
                       "name": "Logo",
                       "fill": "$--foreground",
-                      "content": "Telegram Stars",
+                      "content": "Quack Stars",
                       "fontFamily": "$--font-primary",
                       "fontSize": 16,
                       "fontWeight": "600"
@@ -28608,7 +28608,7 @@
                           "fill": "$--foreground",
                           "textGrowth": "fixed-width",
                           "width": 864,
-                          "content": "Buy Telegram Stars",
+                          "content": "Buy Quack Stars",
                           "lineHeight": 1.05,
                           "textAlign": "center",
                           "fontFamily": "$--font-primary",
@@ -29018,7 +29018,7 @@
                                   "type": "text",
                                   "id": "landing_960_buyTitleText",
                                   "fill": "$--foreground",
-                                  "content": "Buy Telegram Stars",
+                                  "content": "Buy Quack Stars",
                                   "fontFamily": "$--font-primary",
                                   "fontSize": 22,
                                   "fontWeight": "800"
@@ -32074,7 +32074,7 @@
                           "type": "text",
                           "id": "landing_960_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -32501,7 +32501,7 @@
                   "type": "text",
                   "id": "landing_960_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -32682,7 +32682,7 @@
                   "id": "pageRates_960_ratesLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -36278,7 +36278,7 @@
                           "type": "text",
                           "id": "pageRates_960_ratesFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -36705,7 +36705,7 @@
                   "type": "text",
                   "id": "pageRates_960_ratesFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -36887,7 +36887,7 @@
                   "id": "pageHowItWorks_960_howLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -38426,7 +38426,7 @@
                           "type": "text",
                           "id": "pageHowItWorks_960_howFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -38853,7 +38853,7 @@
                   "type": "text",
                   "id": "pageHowItWorks_960_howFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -39030,7 +39030,7 @@
                   "id": "pageFAQ_960_faqLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -39956,7 +39956,7 @@
                           "type": "text",
                           "id": "pageFAQ_960_faqFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -40383,7 +40383,7 @@
                   "type": "text",
                   "id": "pageFAQ_960_faqFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -40565,7 +40565,7 @@
                   "id": "pageSupport_960_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -41590,7 +41590,7 @@
                           "type": "text",
                           "id": "pageSupport_960_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -42017,7 +42017,7 @@
                   "type": "text",
                   "id": "pageSupport_960_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -42203,7 +42203,7 @@
                       "id": "landing_320_logoText",
                       "name": "Logo",
                       "fill": "$--foreground",
-                      "content": "Telegram Stars",
+                      "content": "Quack Stars",
                       "fontFamily": "$--font-primary",
                       "fontSize": 16,
                       "fontWeight": "600"
@@ -42543,7 +42543,7 @@
                           "fill": "$--foreground",
                           "textGrowth": "fixed-width",
                           "width": 288,
-                          "content": "Buy Telegram Stars",
+                          "content": "Buy Quack Stars",
                           "lineHeight": 1.1,
                           "textAlign": "center",
                           "fontFamily": "$--font-primary",
@@ -42961,7 +42961,7 @@
                                   "type": "text",
                                   "id": "landing_320_buyTitleText",
                                   "fill": "$--foreground",
-                                  "content": "Buy Telegram Stars",
+                                  "content": "Buy Quack Stars",
                                   "fontFamily": "$--font-primary",
                                   "fontSize": 22,
                                   "fontWeight": "800"
@@ -46054,7 +46054,7 @@
                           "type": "text",
                           "id": "landing_320_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -46488,7 +46488,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -46669,7 +46669,7 @@
                   "id": "pageRates_320_ratesLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -50253,7 +50253,7 @@
                           "type": "text",
                           "id": "pageRates_320_ratesFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -50687,7 +50687,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -50869,7 +50869,7 @@
                   "id": "pageHowItWorks_320_howLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -52406,7 +52406,7 @@
                           "type": "text",
                           "id": "pageHowItWorks_320_howFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -52840,7 +52840,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -53017,7 +53017,7 @@
                   "id": "pageFAQ_320_faqLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -53984,7 +53984,7 @@
                           "type": "text",
                           "id": "pageFAQ_320_faqFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -54418,7 +54418,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -54600,7 +54600,7 @@
                   "id": "pageSupport_320_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -55643,7 +55643,7 @@
                           "type": "text",
                           "id": "pageSupport_320_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -56077,7 +56077,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -56281,7 +56281,7 @@
                   "id": "6NLZw",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -56695,7 +56695,7 @@
                       "id": "54I2m",
                       "name": "ctaTitle_1440",
                       "fill": "$--primary-foreground",
-                      "content": "Buy Telegram Stars in seconds",
+                      "content": "Buy Quack Stars in seconds",
                       "fontFamily": "$--font-primary",
                       "fontSize": 21,
                       "fontWeight": "900"
@@ -56812,7 +56812,7 @@
                           "type": "text",
                           "id": "xZycw",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -57239,7 +57239,7 @@
                   "type": "text",
                   "id": "0QQnz",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -57429,7 +57429,7 @@
                   "id": "83Hxw",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -57843,7 +57843,7 @@
                       "id": "Kc4Bj",
                       "name": "ctaTitle_1920",
                       "fill": "$--primary-foreground",
-                      "content": "Buy Telegram Stars in seconds",
+                      "content": "Buy Quack Stars in seconds",
                       "fontFamily": "$--font-primary",
                       "fontSize": 22,
                       "fontWeight": "900"
@@ -57960,7 +57960,7 @@
                           "type": "text",
                           "id": "L2oAY",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -58387,7 +58387,7 @@
                   "type": "text",
                   "id": "sDZUc",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -58577,7 +58577,7 @@
                   "id": "V16dR",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -58991,7 +58991,7 @@
                       "id": "Cdhj4",
                       "name": "ctaTitle_960",
                       "fill": "$--primary-foreground",
-                      "content": "Buy Telegram Stars in seconds",
+                      "content": "Buy Quack Stars in seconds",
                       "fontFamily": "$--font-primary",
                       "fontSize": 20,
                       "fontWeight": "900"
@@ -59108,7 +59108,7 @@
                           "type": "text",
                           "id": "bN1fV",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -59535,7 +59535,7 @@
                   "type": "text",
                   "id": "FJlF4",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -59725,7 +59725,7 @@
                   "id": "Nib8G",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -60142,7 +60142,7 @@
                       "id": "xd8IG",
                       "name": "ctaTitle_320",
                       "fill": "$--primary-foreground",
-                      "content": "Buy Telegram Stars in seconds",
+                      "content": "Buy Quack Stars in seconds",
                       "fontFamily": "$--font-primary",
                       "fontSize": 18,
                       "fontWeight": "900"
@@ -60261,7 +60261,7 @@
                           "type": "text",
                           "id": "PXtfh",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -60695,7 +60695,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -60872,7 +60872,7 @@
                   "id": "pageLogin_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -61496,7 +61496,7 @@
                           "type": "text",
                           "id": "pageLogin_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -61923,7 +61923,7 @@
                   "type": "text",
                   "id": "pageLogin_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -62100,7 +62100,7 @@
                   "id": "pageRegister_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 17,
                   "fontWeight": "600"
@@ -62733,7 +62733,7 @@
                           "type": "text",
                           "id": "pageRegister_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -63160,7 +63160,7 @@
                   "type": "text",
                   "id": "pageRegister_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 13,
                   "fontWeight": "500"
@@ -63337,7 +63337,7 @@
                   "id": "pageLogin_1920_pageSupport_1920_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -63959,7 +63959,7 @@
                           "type": "text",
                           "id": "pageLogin_1920_pageSupport_1920_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -64386,7 +64386,7 @@
                   "type": "text",
                   "id": "pageLogin_1920_pageSupport_1920_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -64563,7 +64563,7 @@
                   "id": "pageRegister_1920_pageSupport_1920_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 20,
                   "fontWeight": "600"
@@ -65194,7 +65194,7 @@
                           "type": "text",
                           "id": "pageRegister_1920_pageSupport_1920_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 20,
                           "fontWeight": "700"
@@ -65621,7 +65621,7 @@
                   "type": "text",
                   "id": "pageRegister_1920_pageSupport_1920_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 14,
                   "fontWeight": "500"
@@ -65798,7 +65798,7 @@
                   "id": "pageLogin_960_pageSupport_960_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -66422,7 +66422,7 @@
                           "type": "text",
                           "id": "pageLogin_960_pageSupport_960_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -66849,7 +66849,7 @@
                   "type": "text",
                   "id": "pageLogin_960_pageSupport_960_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -67026,7 +67026,7 @@
                   "id": "pageRegister_960_pageSupport_960_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -67659,7 +67659,7 @@
                           "type": "text",
                           "id": "pageRegister_960_pageSupport_960_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -68086,7 +68086,7 @@
                   "type": "text",
                   "id": "pageRegister_960_pageSupport_960_supportFooter_footerCopyright",
                   "fill": "$--muted-foreground",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -68263,7 +68263,7 @@
                   "id": "pageLogin_320_pageSupport_320_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -68901,7 +68901,7 @@
                           "type": "text",
                           "id": "pageLogin_320_pageSupport_320_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -69335,7 +69335,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"
@@ -69512,7 +69512,7 @@
                   "id": "pageRegister_320_pageSupport_320_supportLogoText",
                   "name": "Logo",
                   "fill": "$--foreground",
-                  "content": "Telegram Stars",
+                  "content": "Quack Stars",
                   "fontFamily": "$--font-primary",
                   "fontSize": 16,
                   "fontWeight": "600"
@@ -70159,7 +70159,7 @@
                           "type": "text",
                           "id": "pageRegister_320_pageSupport_320_supportFooter_footerBrandText",
                           "fill": "$--foreground",
-                          "content": "Telegram Stars",
+                          "content": "Quack Stars",
                           "fontFamily": "$--font-primary",
                           "fontSize": 16,
                           "fontWeight": "700"
@@ -70593,7 +70593,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "© 2026 Telegram Stars. All rights reserved.",
+                  "content": "© 2026 Quack Stars. All rights reserved.",
                   "fontFamily": "$--font-primary",
                   "fontSize": 12,
                   "fontWeight": "500"

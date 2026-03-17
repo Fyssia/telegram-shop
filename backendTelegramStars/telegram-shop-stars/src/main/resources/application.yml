@@ -1,10 +1,16 @@
 # Database config lives in application-db.yml.
 
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
 tg:
   tdlib:
-    api-id: ${TG_TDLIB_API_ID:0}
-    api-hash: ${TG_TDLIB_API_HASH:}
+    api-id: ${TG_TDLIB_API_ID:${TELEGRAM_API_ID:${API_ID:0}}}
+    api-hash: ${TG_TDLIB_API_HASH:${TELEGRAM_API_HASH:${API_HASH:}}}
     session-dir: ${TG_TDLIB_SESSION_DIR:./tdlight-session}
+    phone-number: ${TG_TDLIB_PHONE_NUMBER:${TDLIB_PHONE_NUMBER:${TELEGRAM_PHONE_NUMBER:}}}
+    enabled-for-public-checks: ${TG_TDLIB_ENABLED_FOR_PUBLIC_CHECKS:false}
 
 cryptobot:
   testnet:

@@ -1,8 +1,9 @@
-# telegram-shop-stars (Backend)
+# Quack Stars (Backend)
 
 ## Production Checklist
 
 1. Copy `.env.example` to your deployment secret store.
+   Local runs may also use a `.env` file in the backend project root because Spring imports `optional:file:.env[.properties]`.
 2. Set required secrets:
    - `CRYPTOBOT_TESTNET_TOKEN`
    - `TON_WALLET_RECIPIENT_ADDRESS`
@@ -21,6 +22,23 @@
 - `POST /api/tg/username/check`
 - `GET /actuator/health`
 - `GET /actuator/info`
+
+### `POST /api/tg/username/check`
+
+Supports optional premium validation for Telegram Premium gifting:
+
+- Request: `{ "username": "recipient", "checkPremium": true }`
+- Response includes `isPremium` for `status=USER` when premium check is requested.
+- If premium status cannot be verified, response status is `PREMIUM_CHECK_UNAVAILABLE`.
+
+Both payment endpoints also enforce premium eligibility server-side for `giftPremium` orders.
+
+### TDLib Premium Check
+
+- Premium validation uses TDLib credentials from `TG_TDLIB_API_ID` / `TG_TDLIB_API_HASH`.
+- As a fallback, the app also accepts `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` and `API_ID` / `API_HASH`.
+- Phone number can be set with `TG_TDLIB_PHONE_NUMBER` or `TDLIB_PHONE_NUMBER`.
+- By default, TDLib is reserved for premium checks only because `TG_TDLIB_ENABLED_FOR_PUBLIC_CHECKS=false`.
 
 All other endpoints are denied by default in security config.
 

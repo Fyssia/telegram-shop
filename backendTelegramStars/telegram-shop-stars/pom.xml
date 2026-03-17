@@ -12,10 +12,10 @@
 	</parent>
 
 	<groupId>com.example</groupId>
-	<artifactId>telegram-shop-stars</artifactId>
+	<artifactId>quackstars</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>telegram-shop-stars</name>
-	<description>telegram-shop-stars</description>
+	<name>Quack Stars</name>
+	<description>Quack Stars</description>
 
 	<properties>
 		<java.version>21</java.version>

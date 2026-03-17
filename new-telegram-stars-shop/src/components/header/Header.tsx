@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useI18n } from "@/i18n/client";
 import HeaderButtons from "../headerButtons/HeaderButtons";
 import HeaderMenu from "../headerMenuLinks/HeaderMenu";
@@ -13,19 +13,52 @@ export default function Header() {
   const { messages } = useI18n();
   const panelId = useId();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mobilePanelTop, setMobilePanelTop] = useState<number | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
   const menuToggleRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => {
-    const shouldLockBody =
-      isMenuOpen && window.matchMedia("(max-width: 960px)").matches;
+  const isMobileViewport = useCallback(
+    () => window.matchMedia("(max-width: 960px)").matches,
+    [],
+  );
 
-    document.body.classList.toggle("body--mobile-menu-open", shouldLockBody);
+  const updateMobilePanelTop = useCallback(() => {
+    if (!isMobileViewport()) {
+      setMobilePanelTop(null);
+      return;
+    }
+
+    const toggle = menuToggleRef.current;
+    if (!toggle) return;
+
+    const { bottom } = toggle.getBoundingClientRect();
+    setMobilePanelTop(Math.max(0, Math.round(bottom + 16)));
+  }, [isMobileViewport]);
+
+  useEffect(() => {
+    if (!isMenuOpen || !isMobileViewport()) {
+      return;
+    }
+
+    updateMobilePanelTop();
+  }, [isMenuOpen, isMobileViewport, updateMobilePanelTop]);
+
+  useEffect(() => {
+    if (!isMenuOpen || !isMobileViewport()) {
+      setMobilePanelTop(null);
+      return;
+    }
+
+    updateMobilePanelTop();
+    const onViewportChange = () => updateMobilePanelTop();
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("orientationchange", onViewportChange);
 
     return () => {
-      document.body.classList.remove("body--mobile-menu-open");
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("orientationchange", onViewportChange);
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isMobileViewport, updateMobilePanelTop]);
 
   useEffect(() => {
     if (pathname) {
@@ -45,7 +78,7 @@ export default function Header() {
       ),
     );
 
-    focusable[0]?.focus();
+    focusable[0]?.focus({ preventScroll: true });
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (!isMenuOpen) return;
@@ -53,7 +86,7 @@ export default function Header() {
       if (event.key === "Escape") {
         event.preventDefault();
         setIsMenuOpen(false);
-        menuToggleRef.current?.focus();
+        menuToggleRef.current?.focus({ preventScroll: true });
         return;
       }
 
@@ -78,6 +111,39 @@ export default function Header() {
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+
+      if (
+        menuPanelRef.current?.contains(target) ||
+        menuToggleRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setIsMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isMenuOpen || !isMobileViewport()) return;
+
+    const onScroll = () => setIsMenuOpen(false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [isMenuOpen, isMobileViewport]);
+
   return (
     <header className={styles.header} data-open={isMenuOpen}>
       <div className={styles.header__inner}>
@@ -92,7 +158,13 @@ export default function Header() {
             aria-label={
               isMenuOpen ? messages.header.closeMenu : messages.header.openMenu
             }
-            onClick={() => setIsMenuOpen((value) => !value)}
+            onClick={() => {
+              if (!isMenuOpen) {
+                updateMobilePanelTop();
+              }
+
+              setIsMenuOpen((value) => !value);
+            }}
             ref={menuToggleRef}
           >
             <span
@@ -115,6 +187,13 @@ export default function Header() {
           className={styles.header__panel}
           data-open={isMenuOpen}
           ref={menuPanelRef}
+          style={
+            mobilePanelTop === null
+              ? undefined
+              : ({
+                  "--header-mobile-panel-top": `${mobilePanelTop}px`,
+                } as React.CSSProperties)
+          }
         >
           <HeaderMenu
             className={styles.header__menu}
@@ -126,13 +205,10 @@ export default function Header() {
           />
         </div>
       </div>
-      <button
-        type="button"
+      <div
         className={styles.header__backdrop}
-        aria-hidden={!isMenuOpen}
-        tabIndex={-1}
+        aria-hidden="true"
         data-open={isMenuOpen}
-        onClick={() => setIsMenuOpen(false)}
       />
     </header>
   );

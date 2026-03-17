@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class TdlibClient implements DisposableBean {
-
     private final TdlibProps props;
     private final boolean configured;
     private volatile SimpleTelegramClientFactory clientFactory;
@@ -25,7 +24,7 @@ public class TdlibClient implements DisposableBean {
 
     public TdlibClient(TdlibProps props) {
         this.props = props;
-        this.configured = props.apiId() > 0 && props.apiHash() != null && !props.apiHash().isBlank();
+        this.configured = props.getApiId() > 0 && props.getApiHash() != null && !props.getApiHash().isBlank();
     }
 
     public <T extends TdApi.Object> T send(TdApi.Function<T> fn, Duration timeout) throws Exception {
@@ -38,6 +37,10 @@ public class TdlibClient implements DisposableBean {
 
     public boolean isConfigured() {
         return configured;
+    }
+
+    public boolean isEnabledForPublicChecks() {
+        return configured && props.isEnabledForPublicChecks();
     }
 
     private SimpleTelegramClient getClient() throws Exception {
@@ -53,11 +56,11 @@ public class TdlibClient implements DisposableBean {
 
             Init.init();
 
-            String sessionDir = props.sessionDir() == null || props.sessionDir().isBlank()
+            String sessionDir = props.getSessionDir() == null || props.getSessionDir().isBlank()
                     ? "./tdlight-session"
-                    : props.sessionDir();
+                    : props.getSessionDir();
 
-            TDLibSettings settings = TDLibSettings.create(new APIToken(props.apiId(), props.apiHash()));
+            TDLibSettings settings = TDLibSettings.create(new APIToken(props.getApiId(), props.getApiHash()));
             Path sessionPath = Path.of(sessionDir).toAbsolutePath().normalize();
             settings.setDatabaseDirectoryPath(sessionPath);
             settings.setDownloadedFilesDirectoryPath(sessionPath.resolve("files"));
@@ -73,7 +76,10 @@ public class TdlibClient implements DisposableBean {
     }
 
     private AuthenticationSupplier<?> resolveAuthSupplier() {
-        String phone = System.getenv("TDLIB_PHONE_NUMBER");
+        String phone = props.getPhoneNumber();
+        if (phone == null || phone.isBlank()) {
+            phone = System.getenv("TDLIB_PHONE_NUMBER");
+        }
         if (phone != null && !phone.isBlank()) {
             return AuthenticationSupplier.user(phone);
         }

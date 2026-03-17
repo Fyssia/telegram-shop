@@ -79,6 +79,7 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  min-width: 0;
 }
 
 .how__stepNum {
@@ -115,6 +116,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 
   font-size: 19px;
   font-weight: 700;
@@ -167,6 +169,10 @@
   background-color: var(--color-blue20);
   overflow: hidden;
   box-shadow: var(--box-shadow-soft);
+
+  @media (max-width: 640px) {
+    height: auto;
+  }
 }
 
 .how__previewTopbar {
@@ -179,6 +185,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 640px) {
+    height: auto;
+    min-height: 44px;
+    padding-block: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
 }
 
 .how__previewTopLeft {
@@ -186,6 +200,11 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+
+  @media (max-width: 640px) {
+    flex: 1 1 200px;
+    flex-wrap: wrap;
+  }
 }
 
 .how__previewTopIcon {
@@ -196,6 +215,10 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--color-white10);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .how__previewTopTag {
@@ -207,12 +230,15 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--color-blue10);
+  white-space: nowrap;
 }
 
 .how__previewTopRight {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  margin-left: auto;
 }
 
 .how__previewStatusIcon {
@@ -223,6 +249,7 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--color-gray-10);
+  white-space: nowrap;
 }
 
 .how__previewBody {
@@ -232,6 +259,10 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  @media (max-width: 640px) {
+    height: auto;
+  }
 }
 
 .how__rowIn {
@@ -335,22 +366,28 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .how__receiptLabel {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-gray-10);
+  min-width: 0;
 }
 
 .how__receiptValue {
   font-size: 14px;
   font-weight: 700;
   color: var(--color-white10);
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .how__receiptTotal {
   font-size: 14px;
   font-weight: 800;
   color: var(--color-white10);
+  text-align: right;
+  overflow-wrap: anywhere;
 }

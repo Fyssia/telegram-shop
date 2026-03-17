@@ -34,7 +34,7 @@ function sanitizeInput(input: string): string {
 
 function toSupportWebhookPayload(payload: SupportPayload, requestId: string) {
   return {
-    source: "telegram-stars-web",
+    source: "quackstars-web",
     requestId,
     createdAt: new Date().toISOString(),
     email: payload.email,
