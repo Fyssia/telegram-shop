@@ -9,6 +9,10 @@ public class FragmentApiProperties {
     private String localApiUrl = "http://127.0.0.1:8080/api";
     private int connectTimeoutMs = 10_000;
     private int readTimeoutMs = 180_000;
+    private int deliveryMaxAttempts = 8;
+    private int deliveryRetryDelayMs = 5_000;
+    private int deliveryMaxRetryDelayMs = 120_000;
+    private int deliveryLeaseMs = 240_000;
 
     public boolean isEnabled() {
         return enabled;
@@ -40,5 +44,37 @@ public class FragmentApiProperties {
 
     public void setReadTimeoutMs(int readTimeoutMs) {
         this.readTimeoutMs = readTimeoutMs;
+    }
+
+    public int getDeliveryMaxAttempts() {
+        return deliveryMaxAttempts;
+    }
+
+    public void setDeliveryMaxAttempts(int deliveryMaxAttempts) {
+        this.deliveryMaxAttempts = deliveryMaxAttempts;
+    }
+
+    public int getDeliveryRetryDelayMs() {
+        return deliveryRetryDelayMs;
+    }
+
+    public void setDeliveryRetryDelayMs(int deliveryRetryDelayMs) {
+        this.deliveryRetryDelayMs = deliveryRetryDelayMs;
+    }
+
+    public int getDeliveryMaxRetryDelayMs() {
+        return deliveryMaxRetryDelayMs;
+    }
+
+    public void setDeliveryMaxRetryDelayMs(int deliveryMaxRetryDelayMs) {
+        this.deliveryMaxRetryDelayMs = deliveryMaxRetryDelayMs;
+    }
+
+    public int getDeliveryLeaseMs() {
+        return deliveryLeaseMs;
+    }
+
+    public void setDeliveryLeaseMs(int deliveryLeaseMs) {
+        this.deliveryLeaseMs = deliveryLeaseMs;
     }
 }

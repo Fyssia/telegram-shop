@@ -1,33 +1,88 @@
 import type { NextConfig } from "next";
+import { getPublicSiteUrl } from "./src/config/runtime-env";
 
-const PROD_PUBLIC_DOMAIN = "https://www.quackstars.com";
-const LOCAL_BACKEND_API_BASE_URL = "http://localhost:8081";
-
-function stripTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value.slice(0, -1) : value;
-}
-
-const BACKEND_API_BASE_URL = stripTrailingSlash(
-  process.env.BACKEND_API_BASE_URL ??
-    (process.env.NODE_ENV === "production"
-      ? PROD_PUBLIC_DOMAIN
-      : LOCAL_BACKEND_API_BASE_URL),
-);
+const ENTRYPOINT_NO_STORE_CACHE_CONTROL =
+  "private, no-store, max-age=0, must-revalidate";
+const ENTRYPOINT_VARY_HEADER = "Accept-Language, Cookie";
+const PUBLIC_PAGE_CACHE_CONTROL =
+  "public, max-age=0, s-maxage=300, stale-while-revalidate=86400";
+const PUBLIC_ASSET_CACHE_CONTROL =
+  "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800";
+const SEO_CACHE_CONTROL =
+  "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400";
 
 const nextConfig: NextConfig = {
   output: "standalone",
   turbopack: {
     root: process.cwd(),
   },
-  async rewrites() {
+  async headers() {
     return [
       {
-        source: "/api/tg/:path*",
-        destination: `${BACKEND_API_BASE_URL}/api/tg/:path*`,
+        source: "/",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: ENTRYPOINT_NO_STORE_CACHE_CONTROL,
+          },
+          {
+            key: "Vary",
+            value: ENTRYPOINT_VARY_HEADER,
+          },
+        ],
       },
       {
-        source: "/api/payments/:path*",
-        destination: `${BACKEND_API_BASE_URL}/api/payments/:path*`,
+        source: "/:locale(en|ru)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: PUBLIC_PAGE_CACHE_CONTROL,
+          },
+          {
+            key: "Vary",
+            value: ENTRYPOINT_VARY_HEADER,
+          },
+        ],
+      },
+      {
+        source: "/:locale(en|ru)/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: PUBLIC_PAGE_CACHE_CONTROL,
+          },
+          {
+            key: "Vary",
+            value: ENTRYPOINT_VARY_HEADER,
+          },
+        ],
+      },
+      {
+        source: "/robots.txt",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: SEO_CACHE_CONTROL,
+          },
+        ],
+      },
+      {
+        source: "/sitemap.xml",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: SEO_CACHE_CONTROL,
+          },
+        ],
+      },
+      {
+        source: "/(.*)\\.(svg|webp|png|jpg|jpeg|gif|ico|json)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: PUBLIC_ASSET_CACHE_CONTROL,
+          },
+        ],
       },
     ];
   },
@@ -41,6 +96,9 @@ const nextConfig: NextConfig = {
     ],
   },
   reactCompiler: true,
+  env: {
+    NEXT_PUBLIC_SITE_URL: getPublicSiteUrl(),
+  },
 };
 
 export default nextConfig;

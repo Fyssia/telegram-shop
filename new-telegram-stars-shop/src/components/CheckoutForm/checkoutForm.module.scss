@@ -150,15 +150,15 @@
   transform: translateY(-50%);
   z-index: 1;
 
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
   color: var(--color-gray-10);
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
   pointer-events: none;
 
@@ -177,6 +177,60 @@
   width: 20px;
   height: 20px;
   color: var(--color-gray-10);
+  pointer-events: none;
+}
+
+.checkout__paymentMethodIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 6px 14px rgba(0, 0, 0, 0.18);
+
+  svg {
+    width: 13px;
+    height: 13px;
+    display: block;
+  }
+
+  &[data-method="ton"] {
+    background:
+      linear-gradient(180deg, rgba(0, 182, 255, 0.95), rgba(0, 122, 255, 0.95)),
+      #0098ea;
+  }
+
+  &[data-method="ton_dev"] {
+    background:
+      linear-gradient(180deg, rgba(168, 85, 247, 0.96), rgba(99, 102, 241, 0.96)),
+      #7c3aed;
+  }
+
+  &[data-method="usdt_ton"],
+  &[data-method="usdt_trc20"] {
+    background:
+      linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(22, 163, 74, 0.95)),
+      #26a17b;
+  }
+
+  &[data-method="crypto_bot"] {
+    background:
+      linear-gradient(180deg, rgba(251, 191, 36, 0.96), rgba(217, 119, 6, 0.96)),
+      #f59e0b;
+  }
+}
+
+.checkout__paymentMethodIconAbs {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   pointer-events: none;
 }
 
@@ -460,31 +514,16 @@
   gap: 10px;
 }
 
-.checkout__modalOptionDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.36);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.03);
+.checkout__modalOptionIcon {
+  width: 18px;
+  height: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 4px 10px rgba(0, 0, 0, 0.14);
 
-  .checkout__modalOption[data-selected="true"][data-accent="blue"] & {
-    background: #2aabee;
-  }
-
-  .checkout__modalOption[data-selected="true"][data-accent="violet"] & {
-    background: #a855f7;
-  }
-
-  .checkout__modalOption[data-selected="true"][data-accent="emerald"] & {
-    background: #10b981;
-  }
-
-  .checkout__modalOption[data-selected="true"][data-accent="cyan"] & {
-    background: #22d3ee;
-  }
-
-  .checkout__modalOption[data-selected="true"][data-accent="amber"] & {
-    background: #f59e0b;
+  svg {
+    width: 12px;
+    height: 12px;
   }
 }
 
@@ -664,8 +703,16 @@
     gap: 8px;
   }
 
+  @media (max-width: 480px) {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 11px 12px;
+  }
+
   @media (max-width: 400px) {
-    font-size: 15px;
+    padding: 10px 12px;
+    font-size: 14px;
   }
 }
 
@@ -679,10 +726,19 @@
   @media (max-width: 560px) {
     gap: 8px;
   }
+
+  @media (max-width: 480px) {
+    width: auto;
+  }
 }
 
 .checkout__amountStar {
   color: var(--color-yellow10);
+
+  @media (max-width: 480px) {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .checkout__amountValue {
@@ -721,9 +777,16 @@
     max-width: 140px;
   }
 
+  @media (max-width: 480px) {
+    flex-basis: 72px;
+    max-width: 100%;
+    padding-left: 10px;
+  }
+
   @media (max-width: 400px) {
-    max-width: 110px;
-    padding-left: 12px;
+    flex-basis: 64px;
+    max-width: 96px;
+    padding-left: 8px;
   }
 }
 
@@ -736,11 +799,18 @@
   margin-left: auto;
 
   @media (max-width: 480px) {
-    font-size: 14px;
+    width: auto;
+    margin-left: auto;
+    text-align: right;
+    font-size: 13px;
   }
 
   @media (max-width: 560px) {
     font-size: 14px;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 12px;
   }
 }
 
@@ -950,4 +1020,35 @@
 
 .checkout__submitStatus[data-state="error"] {
   color: #fca5a5;
+}
+
+.checkout__invoiceLinkButton {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    to bottom,
+    rgba(56, 189, 248, 0.18),
+    rgba(56, 189, 248, 0.08)
+  );
+  color: var(--color-white10);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  &:hover {
+    border-color: rgba(56, 189, 248, 0.56);
+    transform: translateY(-1px);
+  }
 }

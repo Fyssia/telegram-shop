@@ -8,19 +8,16 @@ export default async function FaqSupportCta() {
   const cta = (await getDictionary()).faq.supportCta;
 
   return (
-    <aside className={styles.faqSupportCta} aria-labelledby="faq-support-title">
-      <div className={styles.faqSupportCta__copy}>
-        <h2 className={styles.faqSupportCta__title} id="faq-support-title">
+    <aside className={styles.bottomCta} aria-labelledby="faq-support-title">
+      <div className={styles.bottomCta__copy}>
+        <h2 className={styles.bottomCta__title} id="faq-support-title">
           {cta.title}
         </h2>
-        <p className={styles.faqSupportCta__text}>{cta.text}</p>
+        <p className={styles.bottomCta__text}>{cta.text}</p>
       </div>
 
-      <LocalizedLink
-        href={PAGES.SUPPORT}
-        className={styles.faqSupportCta__button}
-      >
-        <MessageCircleIcon className={styles.faqSupportCta__buttonIcon} />
+      <LocalizedLink href={PAGES.SUPPORT} className={styles.bottomCta__button}>
+        <MessageCircleIcon className={styles.bottomCta__buttonIcon} />
         <span>{cta.button}</span>
       </LocalizedLink>
     </aside>

@@ -1,6 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
+  ENTRYPOINT_NO_STORE_CACHE_CONTROL,
+  ENTRYPOINT_VARY_HEADER,
+} from "@/config/cache-control";
+import {
   LOCALE_REQUEST_HEADER,
   resolvePreferredLocale,
   stripLocalePrefix,
@@ -65,7 +69,16 @@ export function proxy(request: NextRequest) {
     redirectUrl.pathname =
       pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
 
-    return NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(redirectUrl);
+    response.headers.set("Cache-Control", ENTRYPOINT_NO_STORE_CACHE_CONTROL);
+    response.headers.set("Vary", ENTRYPOINT_VARY_HEADER);
+    response.cookies.set(LANGUAGE_COOKIE, locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+
+    return response;
   }
 
   const requestHeaders = new Headers(request.headers);
@@ -79,12 +92,6 @@ export function proxy(request: NextRequest) {
     request: {
       headers: requestHeaders,
     },
-  });
-
-  response.cookies.set(LANGUAGE_COOKIE, localeMatch.locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
   });
 
   return response;

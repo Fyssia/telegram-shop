@@ -1,21 +1,25 @@
 "use client";
 
-import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
+import {
+  CHAIN,
+  UserRejectsError,
+  useTonConnectUI,
+  useTonWallet,
+  WalletNotConnectedError,
+} from "@tonconnect/ui-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PAGES } from "@/config/pages.config";
 import { useI18n } from "@/i18n/client";
 import { localizePath } from "@/i18n/routing";
+import { formatUsdAmount, resolveStarsAmountUsd } from "@/shared/pricing";
 import { UsernameBadge } from "../Avatar/Avatar";
 import styles from "./checkoutForm.module.scss";
 
 const USERNAME_RE = /^[a-z0-9_]{5,32}$/;
-const APPROX_USD_NUMBER_FORMAT_LOCALE = {
-  en: "en-US",
-  ru: "ru-RU",
-} as const;
 
 type PurchaseSubmitState = "idle" | "submitting" | "success" | "error";
+type SubmitStage = "payment" | "balance";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -39,6 +43,8 @@ type TonWalletCreateOrderRequestPayload = {
   starsAmount: number;
   fulfillmentMethod: "buyStars" | "giftPremium";
   amount: number;
+  paymentMethod: "ton" | "usdt_ton" | "ton_dev";
+  senderAddress: string;
 };
 
 type InvoiceCreateResponsePayload = {
@@ -52,14 +58,23 @@ type InvoiceCreateResponsePayload = {
   webAppInvoiceUrl?: string;
 };
 
+type BalanceCheckResponsePayload = {
+  enough?: boolean;
+};
+
 type TonWalletOrderResponsePayload = {
   orderId?: number;
   paymentReference?: string;
   paymentStatus?: string;
   orderStatus?: string;
+  paymentMethod?: string;
+  asset?: string;
+  assetAmount?: string;
+  assetAmountBaseUnits?: string;
+  transferAddress?: string;
+  transferAmount?: string;
+  transferPayload?: string;
   recipientAddress?: string;
-  amountTon?: string;
-  amountNano?: string;
   validUntil?: number;
   network?: string;
 };
@@ -97,6 +112,11 @@ type PaymentMethodValue =
   | "ton"
   | "usdt_trc20"
   | "ton_dev";
+type PaymentMethodOption = {
+  value: PaymentMethodValue;
+  label: string;
+  accent: string;
+};
 type PurchaseKindValue = "stars" | "premium";
 type PremiumDurationValue = 3 | 6 | 12;
 
@@ -108,6 +128,131 @@ const PREMIUM_DURATION_PRICES_USD: Record<PremiumDurationValue, number> = {
 };
 const ORDER_POLL_INTERVAL_MS = 5_000;
 const ORDER_POLL_MAX_DURATION_MS = 15 * 60_000;
+const DEV_PAYMENT_METHOD_ENABLED = process.env.NODE_ENV !== "production";
+
+function PaymentMethodIcon({
+  method,
+  className,
+}: {
+  method: PaymentMethodValue;
+  className?: string;
+}) {
+  if (method === "usdt_ton" || method === "usdt_trc20") {
+    return (
+      <span
+        className={`${styles.checkout__paymentMethodIcon} ${className ?? ""}`.trim()}
+        data-method={method}
+        aria-hidden="true"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          focusable="false"
+        >
+          <path
+            d="M5 6.25h14"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M9 6.25V4.75h6v1.5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M12 6.5v10"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M7.5 9.75c1.42.77 2.93 1.15 4.5 1.15s3.08-.38 4.5-1.15"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M8.35 10.4v2.02c0 .96 1.63 1.73 3.65 1.73s3.65-.77 3.65-1.73V10.4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    );
+  }
+
+  if (method === "crypto_bot") {
+    return (
+      <span
+        className={`${styles.checkout__paymentMethodIcon} ${className ?? ""}`.trim()}
+        data-method={method}
+        aria-hidden="true"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          focusable="false"
+        >
+          <path
+            d="M9.25 7.25V6a2.75 2.75 0 0 1 5.5 0v1.25"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <rect
+            x="5.75"
+            y="7.75"
+            width="12.5"
+            height="9.5"
+            rx="4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          />
+          <circle cx="9.5" cy="12.5" r="1.1" fill="currentColor" />
+          <circle cx="14.5" cy="12.5" r="1.1" fill="currentColor" />
+          <path
+            d="M10 15.15c.55.32 1.2.48 2 .48s1.45-.16 2-.48"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`${styles.checkout__paymentMethodIcon} ${className ?? ""}`.trim()}
+      data-method={method}
+      aria-hidden="true"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        focusable="false"
+      >
+        <path d="M12 3.8 6.45 8.58a.72.72 0 0 0-.14.9L11.44 18a.64.64 0 0 0 1.12 0l5.13-8.52a.72.72 0 0 0-.14-.9z" />
+        <path
+          d="M12 7.3 9.23 9.66h5.54z"
+          fill={
+            method === "ton_dev"
+              ? "rgba(255,255,255,0.82)"
+              : "rgba(255,255,255,0.88)"
+          }
+        />
+      </svg>
+    </span>
+  );
+}
 
 function clampAmount(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -168,6 +313,10 @@ function getNumberValue(value: unknown): number | undefined {
     : undefined;
 }
 
+function getBooleanValue(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
+
 async function readJsonRecord(response: Response): Promise<JsonRecord | null> {
   const text = await response.text();
   if (!text) return null;
@@ -190,7 +339,7 @@ function resolveInvoiceAmountUsd(
     return PREMIUM_DURATION_PRICES_USD[premiumDuration];
   }
 
-  return Number((starsAmount * 0.018).toFixed(2));
+  return resolveStarsAmountUsd(starsAmount);
 }
 
 function buildInvoiceCreateRequest(options: {
@@ -249,9 +398,18 @@ function buildTonWalletCreateOrderRequest(options: {
   quantity: number;
   isPremiumCheckout: boolean;
   premiumDuration: PremiumDurationValue;
+  paymentMethod: "ton" | "usdt_ton" | "ton_dev";
+  senderAddress: string;
 }): TonWalletCreateOrderRequestPayload {
-  const { orderId, recipient, quantity, isPremiumCheckout, premiumDuration } =
-    options;
+  const {
+    orderId,
+    recipient,
+    quantity,
+    isPremiumCheckout,
+    premiumDuration,
+    paymentMethod,
+    senderAddress,
+  } = options;
   const fulfillmentMethod = isPremiumCheckout ? "giftPremium" : "buyStars";
   const amountUsd = resolveInvoiceAmountUsd(
     isPremiumCheckout,
@@ -265,6 +423,8 @@ function buildTonWalletCreateOrderRequest(options: {
     starsAmount: quantity,
     fulfillmentMethod,
     amount: amountUsd,
+    paymentMethod,
+    senderAddress,
   };
 }
 
@@ -283,6 +443,44 @@ function parseInvoiceCreateResponse(
     miniAppInvoiceUrl: getStringValue(record.miniAppInvoiceUrl),
     webAppInvoiceUrl: getStringValue(record.webAppInvoiceUrl),
   };
+}
+
+function parseBalanceCheckResponse(
+  record: JsonRecord | null,
+): BalanceCheckResponsePayload | null {
+  if (!record) return null;
+
+  return {
+    enough: getBooleanValue(record.enough),
+  };
+}
+
+function parseUsernameCheckPayload(
+  record: JsonRecord | null,
+): UsernameCheckPayload | null {
+  if (!record) return null;
+
+  return {
+    ok: getBooleanValue(record.ok),
+    status: getStringValue(record.status),
+    displayName: getStringValue(record.displayName),
+    avatarUrl: getStringValue(record.avatarUrl),
+    isPremium:
+      typeof record.isPremium === "boolean"
+        ? record.isPremium
+        : record.isPremium === null
+          ? null
+          : undefined,
+  };
+}
+
+function shouldCacheUsernameCheckPayload(payload: UsernameCheckPayload) {
+  return (
+    payload.status === "USER" ||
+    payload.status === "NOT_FOUND" ||
+    payload.status === "BOT" ||
+    payload.status === "NOT_A_USER"
+  );
 }
 
 function getPositiveIntegerString(value: unknown): string | undefined {
@@ -305,9 +503,14 @@ function parseTonWalletOrderResponse(
     paymentReference: getStringValue(record.paymentReference),
     paymentStatus: getStringValue(record.paymentStatus),
     orderStatus: getStringValue(record.orderStatus),
+    paymentMethod: getStringValue(record.paymentMethod),
+    asset: getStringValue(record.asset),
+    assetAmount: getStringValue(record.assetAmount),
+    assetAmountBaseUnits: getPositiveIntegerString(record.assetAmountBaseUnits),
+    transferAddress: getStringValue(record.transferAddress),
+    transferAmount: getPositiveIntegerString(record.transferAmount),
+    transferPayload: getStringValue(record.transferPayload),
     recipientAddress: getStringValue(record.recipientAddress),
-    amountTon: getStringValue(record.amountTon),
-    amountNano: getPositiveIntegerString(record.amountNano),
     validUntil: getNumberValue(record.validUntil),
     network: getStringValue(record.network),
   };
@@ -319,6 +522,9 @@ function parseProblemMessage(record: JsonRecord | null): string | null {
   const detail = getStringValue(record.detail);
   if (detail?.trim()) return detail.trim();
 
+  const message = getStringValue(record.message);
+  if (message?.trim()) return message.trim();
+
   const title = getStringValue(record.title);
   if (title?.trim()) return title.trim();
 
@@ -328,9 +534,138 @@ function parseProblemMessage(record: JsonRecord | null): string | null {
   return null;
 }
 
+function parseProblemCode(record: JsonRecord | null): string | null {
+  if (!record) return null;
+
+  const code = getStringValue(record.code);
+  return code?.trim() ? code.trim() : null;
+}
+
+function resolveCheckoutProblemMessage(
+  record: JsonRecord | null,
+  messages: {
+    insufficientBalance: string;
+    balanceCheckUnavailable: string;
+    paymentProviderUnavailable: string;
+  },
+) {
+  const code = parseProblemCode(record);
+
+  if (code === "INSUFFICIENT_BALANCE") {
+    return messages.insufficientBalance;
+  }
+
+  if (code?.startsWith("BALANCE_")) {
+    return messages.balanceCheckUnavailable;
+  }
+
+  if (
+    code === "PAYMENT_PROVIDER_UNAVAILABLE" ||
+    code?.startsWith("PAYMENTS_UPSTREAM_")
+  ) {
+    return messages.paymentProviderUnavailable;
+  }
+
+  return parseProblemMessage(record);
+}
+
+function getSubmitErrorText(error: unknown): string {
+  if (!(error instanceof Error)) return "";
+
+  const info =
+    typeof error === "object" && error !== null
+      ? getStringValue((error as unknown as Record<string, unknown>).info)
+      : undefined;
+  const parts = [error.name, error.message, info];
+
+  return parts
+    .filter((value) => typeof value === "string" && value.trim().length > 0)
+    .join(" ")
+    .toLowerCase();
+}
+
+function isTonWalletInsufficientFundsError(error: unknown): boolean {
+  const text = getSubmitErrorText(error);
+
+  return (
+    text.includes("insufficient funds") ||
+    text.includes("insufficient balance") ||
+    text.includes("not enough funds") ||
+    text.includes("not enough balance") ||
+    text.includes("balance is too low") ||
+    text.includes("low balance") ||
+    text.includes("недостаточно средств") ||
+    text.includes("недостаточно денег") ||
+    text.includes("недостаточный баланс") ||
+    text.includes("не хватает средств") ||
+    text.includes("не хватает баланса")
+  );
+}
+
+function resolveTonWalletSubmitErrorMessage(
+  error: unknown,
+  messages: {
+    tonWalletConnect: string;
+    tonWalletPaymentFailed: string;
+    tonWalletRejected: string;
+    tonWalletInsufficientFunds: string;
+  },
+): string | null {
+  if (error instanceof UserRejectsError) {
+    return messages.tonWalletRejected;
+  }
+
+  if (error instanceof WalletNotConnectedError) {
+    return messages.tonWalletConnect;
+  }
+
+  const text = getSubmitErrorText(error);
+  if (
+    text.includes("wallet was not connected") ||
+    text.includes("connect wallet")
+  ) {
+    return messages.tonWalletConnect;
+  }
+
+  if (
+    text.includes("transaction was not sent") ||
+    text.includes("user rejects") ||
+    text.includes("rejected") ||
+    text.includes("cancelled") ||
+    text.includes("canceled")
+  ) {
+    return messages.tonWalletRejected;
+  }
+
+  if (isTonWalletInsufficientFundsError(error)) {
+    return messages.tonWalletInsufficientFunds;
+  }
+
+  return null;
+}
+
 function extractInvoiceUrl(
   payload: InvoiceCreateResponsePayload,
 ): string | null {
+  const telegramWebApp =
+    typeof window !== "undefined"
+      ? (
+          window as Window & {
+            Telegram?: {
+              WebApp?: {
+                openLink?: (url: string) => void;
+                openTelegramLink?: (url: string) => void;
+              };
+            };
+          }
+        ).Telegram?.WebApp
+      : undefined;
+
+  if (telegramWebApp) {
+    if (payload.miniAppInvoiceUrl) return payload.miniAppInvoiceUrl;
+    if (payload.botInvoiceUrl) return payload.botInvoiceUrl;
+  }
+
   if (payload.botInvoiceUrl) return payload.botInvoiceUrl;
   if (payload.miniAppInvoiceUrl) return payload.miniAppInvoiceUrl;
   if (payload.webAppInvoiceUrl) return payload.webAppInvoiceUrl;
@@ -351,7 +686,106 @@ function isFinalErrorOrderStatus(status: string | undefined): boolean {
   return status === "cancelled" || status === "failed" || status === "expired";
 }
 
+function isFinalErrorPaymentStatus(status: string | undefined): boolean {
+  return status === "cancelled" || status === "failed" || status === "expired";
+}
+
+function resolveTonWalletTargetNetwork(
+  paymentMethod: PaymentMethodValue,
+): string | null {
+  if (paymentMethod === "ton_dev") {
+    return CHAIN.TESTNET;
+  }
+
+  if (
+    paymentMethod === "ton_wallet" ||
+    paymentMethod === "ton" ||
+    paymentMethod === "usdt_ton"
+  ) {
+    return CHAIN.MAINNET;
+  }
+
+  return null;
+}
+
+function extractInvoiceUrlSafely(
+  payload: InvoiceCreateResponsePayload,
+): string | null {
+  try {
+    return extractInvoiceUrl(payload);
+  } catch {
+    return null;
+  }
+}
+
+function openInvoiceUrlSafely(url: string): boolean {
+  try {
+    openInvoiceUrl(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resolveSubmitErrorMessage(options: {
+  paymentMethod: PaymentMethodValue;
+  submitStage: SubmitStage;
+  tonWalletErrorMessage: string | null;
+  messages: {
+    balanceCheckUnavailable: string;
+    paymentProviderUnavailable: string;
+    requestFailed: string;
+    tonWalletPaymentFailed: string;
+  };
+}): string {
+  const { paymentMethod, submitStage, tonWalletErrorMessage, messages } =
+    options;
+
+  if (tonWalletErrorMessage) {
+    return tonWalletErrorMessage;
+  }
+
+  if (submitStage === "balance") {
+    return messages.balanceCheckUnavailable;
+  }
+
+  if (isTonWalletPaymentMethod(paymentMethod)) {
+    return messages.tonWalletPaymentFailed;
+  }
+
+  if (paymentMethod === "crypto_bot") {
+    return messages.paymentProviderUnavailable;
+  }
+
+  return messages.requestFailed;
+}
+
 function openInvoiceUrl(url: string) {
+  const telegramWebApp = (
+    window as Window & {
+      Telegram?: {
+        WebApp?: {
+          openLink?: (url: string) => void;
+          openTelegramLink?: (url: string) => void;
+        };
+      };
+    }
+  ).Telegram?.WebApp;
+
+  if (telegramWebApp) {
+    try {
+      if (url.startsWith("https://t.me/") || url.startsWith("http://t.me/")) {
+        telegramWebApp.openTelegramLink?.(url);
+        return;
+      }
+
+      telegramWebApp.openLink?.(url);
+      return;
+    } catch {
+      // Fall back to regular browser navigation below.
+    }
+  }
+
   const popup = window.open(url, "_blank", "noopener,noreferrer");
   if (popup) return;
   window.location.assign(url);
@@ -417,6 +851,8 @@ function setCachedUsernameCheck(
 
 export function CheckoutForm() {
   const router = useRouter();
+  const [tonConnectUI] = useTonConnectUI();
+  const tonWallet = useTonWallet();
   const { locale, messages } = useI18n();
   const searchParams = useSearchParams();
   const copy = messages.checkoutForm;
@@ -440,6 +876,9 @@ export function CheckoutForm() {
     useState<PurchaseSubmitState>("idle");
   const [purchaseMessage, setPurchaseMessage] = useState("");
   const [purchaseRequestId, setPurchaseRequestId] = useState<string | null>(
+    null,
+  );
+  const [purchaseInvoiceUrl, setPurchaseInvoiceUrl] = useState<string | null>(
     null,
   );
   const submitControllerRef = useRef<AbortController | null>(null);
@@ -474,8 +913,8 @@ export function CheckoutForm() {
     ],
     [copy.purchaseKinds],
   );
-  const paymentMethodOptions = useMemo(
-    () => [
+  const paymentMethodOptions = useMemo(() => {
+    const options: PaymentMethodOption[] = [
       {
         value: "ton" as const,
         label: copy.paymentMethods.ton,
@@ -487,33 +926,39 @@ export function CheckoutForm() {
         accent: "emerald",
       },
       {
-        value: "ton_dev" as const,
-        label: copy.paymentMethods.tonDev,
-        accent: "violet",
-      },
-      {
         value: "crypto_bot" as const,
         label: copy.paymentMethods.cryptoBot,
         accent: "amber",
       },
-    ],
-    [copy.paymentMethods],
-  );
+    ];
+
+    if (DEV_PAYMENT_METHOD_ENABLED) {
+      options.splice(2, 0, {
+        value: "ton_dev" as const,
+        label: copy.paymentMethods.tonDev,
+        accent: "violet",
+      });
+    }
+
+    return options;
+  }, [copy.paymentMethods]);
+  const selectedPaymentMethodOption =
+    paymentMethodOptions.find((option) => option.value === paymentMethod) ??
+    paymentMethodOptions[0];
   const selectedPaymentMethodLabel =
-    paymentMethodOptions.find((option) => option.value === paymentMethod)
-      ?.label ?? copy.paymentMethods.ton;
-  const amountApproxUsd = useMemo(() => amount * 0.018, [amount]);
-  const amountApproxUsdFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(APPROX_USD_NUMBER_FORMAT_LOCALE[locale], {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    [locale],
+    selectedPaymentMethodOption?.label ?? copy.paymentMethods.ton;
+  const amountApproxUsd = useMemo(
+    () => resolveStarsAmountUsd(amount),
+    [amount],
   );
   const amountApproxUsdLabel = useMemo(
-    () => amountApproxUsdFormatter.format(amountApproxUsd),
-    [amountApproxUsd, amountApproxUsdFormatter],
+    () =>
+      formatUsdAmount(amountApproxUsd, {
+        locale,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 3,
+      }),
+    [amountApproxUsd, locale],
   );
   const normalizedUsername = useMemo(
     () => normalizeUsername(username),
@@ -651,12 +1096,8 @@ export function CheckoutForm() {
 
           const record = await readJsonRecord(pollRes);
           if (!pollRes.ok) {
-            const problemMessage = parseProblemMessage(record);
             setPurchaseState("error");
-            setPurchaseMessage(
-              problemMessage ||
-                `${copy.messages.requestFailed} (HTTP ${pollRes.status})`,
-            );
+            setPurchaseMessage(copy.messages.invoiceStatusCheckFailed);
             stopOrderPolling();
             return;
           }
@@ -691,7 +1132,7 @@ export function CheckoutForm() {
           }
 
           setPurchaseState("error");
-          setPurchaseMessage(copy.messages.requestFailed);
+          setPurchaseMessage(copy.messages.invoiceStatusCheckFailed);
           stopOrderPolling();
         } finally {
           if (pollControllerRef.current === controller) {
@@ -702,15 +1143,7 @@ export function CheckoutForm() {
 
       void tick();
     },
-    [
-      copy.messages.awaitingPaymentConfirmation,
-      copy.messages.paymentFailedStatusPrefix,
-      copy.messages.paymentReceivedProcessingDelivery,
-      copy.messages.paymentTimeout,
-      copy.messages.requestFailed,
-      handleOrderFulfilled,
-      stopOrderPolling,
-    ],
+    [copy.messages, handleOrderFulfilled, stopOrderPolling],
   );
 
   const startTonWalletOrderPolling = useCallback(
@@ -751,21 +1184,27 @@ export function CheckoutForm() {
 
           const record = await readJsonRecord(pollRes);
           if (!pollRes.ok) {
-            const problemMessage = parseProblemMessage(record);
             setPurchaseState("error");
-            setPurchaseMessage(
-              problemMessage ||
-                `${copy.messages.requestFailed} (HTTP ${pollRes.status})`,
-            );
+            setPurchaseMessage(copy.messages.tonWalletStatusCheckFailed);
             stopOrderPolling();
             return;
           }
 
           const payload = parseTonWalletOrderResponse(record);
           const orderStatus = payload?.orderStatus;
+          const paymentStatus = payload?.paymentStatus;
 
           if (orderStatus === "fulfilled") {
             handleOrderFulfilled(context.fulfillmentMethod);
+            return;
+          }
+
+          if (isFinalErrorPaymentStatus(paymentStatus)) {
+            setPurchaseState("error");
+            setPurchaseMessage(
+              `${copy.messages.paymentFailedStatusPrefix}: ${paymentStatus}`,
+            );
+            stopOrderPolling();
             return;
           }
 
@@ -791,7 +1230,7 @@ export function CheckoutForm() {
           }
 
           setPurchaseState("error");
-          setPurchaseMessage(copy.messages.requestFailed);
+          setPurchaseMessage(copy.messages.tonWalletStatusCheckFailed);
           stopOrderPolling();
         } finally {
           if (tonPollControllerRef.current === controller) {
@@ -802,15 +1241,7 @@ export function CheckoutForm() {
 
       void tick();
     },
-    [
-      copy.messages.awaitingPaymentConfirmation,
-      copy.messages.paymentFailedStatusPrefix,
-      copy.messages.paymentReceivedProcessingDelivery,
-      copy.messages.paymentTimeout,
-      copy.messages.requestFailed,
-      handleOrderFulfilled,
-      stopOrderPolling,
-    ],
+    [copy.messages, handleOrderFulfilled, stopOrderPolling],
   );
 
   useEffect(() => {
@@ -867,6 +1298,7 @@ export function CheckoutForm() {
     setPurchaseState("idle");
     setPurchaseMessage("");
     setPurchaseRequestId(null);
+    setPurchaseInvoiceUrl(null);
   }
 
   function commitAmountInput(options?: { fallbackToCurrent?: boolean }) {
@@ -927,6 +1359,18 @@ export function CheckoutForm() {
       if (backendStatus === "PREMIUM_CHECK_UNAVAILABLE") {
         setCheckStatus("error");
         setCheckMessage(copy.messages.premiumCheckUnavailable);
+        return;
+      }
+
+      if (backendStatus === "ERROR") {
+        setAvatarUrl(null);
+        setDisplayName(null);
+        setCheckStatus("error");
+        setCheckMessage(
+          typeof data.displayName === "string" && data.displayName.trim()
+            ? data.displayName.trim()
+            : copy.messages.requestFailedGeneric,
+        );
         return;
       }
 
@@ -1031,14 +1475,60 @@ export function CheckoutForm() {
         : copy.messages.creatingInvoice,
     );
     setPurchaseRequestId(null);
+    setPurchaseInvoiceUrl(null);
+
+    const submitStage: SubmitStage = "payment";
 
     try {
       if (isTonWalletPaymentMethod(paymentMethod)) {
+        const tonCheckoutMethod =
+          paymentMethod === "usdt_ton" || paymentMethod === "ton_dev"
+            ? paymentMethod
+            : "ton";
+        const isDevTonPayment = tonCheckoutMethod === "ton_dev";
+        let connectedWallet = tonConnectUI.wallet ?? tonWallet;
+        let senderAddress = "dev-ton-wallet";
+
+        if (!isDevTonPayment) {
+          const requiredNetwork =
+            resolveTonWalletTargetNetwork(tonCheckoutMethod);
+
+          if (!connectedWallet) {
+            setPurchaseMessage(copy.messages.tonWalletConnect);
+            connectedWallet = await tonConnectUI.connectWallet();
+          }
+
+          senderAddress = connectedWallet?.account.address?.trim() ?? "";
+          if (!senderAddress) {
+            setPurchaseState("error");
+            setPurchaseMessage(copy.messages.tonWalletConnect);
+            setPurchaseRequestId(null);
+            return;
+          }
+
+          if (
+            requiredNetwork &&
+            connectedWallet?.account.chain &&
+            connectedWallet.account.chain !== requiredNetwork
+          ) {
+            setPurchaseState("error");
+            setPurchaseMessage(
+              requiredNetwork === CHAIN.TESTNET
+                ? copy.messages.tonWalletSwitchToTestnet
+                : copy.messages.tonWalletSwitchToMainnet,
+            );
+            setPurchaseRequestId(null);
+            return;
+          }
+        }
+
         const tonWalletRequestPayload = buildTonWalletCreateOrderRequest({
           recipient,
           quantity: quantityToSubmit,
           isPremiumCheckout,
           premiumDuration,
+          paymentMethod: tonCheckoutMethod,
+          senderAddress,
         });
         const tonOrderRes = await fetch("/api/payments/ton-wallet/orders", {
           method: "POST",
@@ -1053,7 +1543,10 @@ export function CheckoutForm() {
 
         const tonOrderRecord = await readJsonRecord(tonOrderRes);
         if (!tonOrderRes.ok) {
-          const problemMessage = parseProblemMessage(tonOrderRecord);
+          const problemMessage = resolveCheckoutProblemMessage(
+            tonOrderRecord,
+            copy.messages,
+          );
           setPurchaseState("error");
           setPurchaseMessage(
             problemMessage ||
@@ -1078,6 +1571,14 @@ export function CheckoutForm() {
           return;
         }
 
+        if (isFinalErrorPaymentStatus(tonOrderPayload.paymentStatus)) {
+          setPurchaseState("error");
+          setPurchaseMessage(
+            `${copy.messages.paymentFailedStatusPrefix}: ${tonOrderPayload.paymentStatus}`,
+          );
+          return;
+        }
+
         if (isFinalErrorOrderStatus(tonOrderPayload.orderStatus)) {
           setPurchaseState("error");
           setPurchaseMessage(
@@ -1086,15 +1587,41 @@ export function CheckoutForm() {
           return;
         }
 
-        if (!tonWallet) {
-          setPurchaseMessage(copy.messages.tonWalletConnect);
-          await tonConnectUI.connectWallet();
+        if (isDevTonPayment) {
+          if (
+            tonOrderPayload.orderStatus === "paid" ||
+            tonOrderPayload.orderStatus === "processing"
+          ) {
+            setPurchaseMessage(copy.messages.paymentReceivedProcessingDelivery);
+          } else {
+            setPurchaseMessage(copy.messages.awaitingPaymentConfirmation);
+          }
+
+          startTonWalletOrderPolling(tonOrderPayload.orderId, method);
+          return;
         }
 
-        if (!tonOrderPayload.recipientAddress || !tonOrderPayload.amountNano) {
+        if (
+          !tonOrderPayload.transferAddress ||
+          !tonOrderPayload.transferAmount ||
+          !tonOrderPayload.network
+        ) {
           setPurchaseState("error");
           setPurchaseMessage(copy.messages.invalidInvoiceResponse);
           setPurchaseRequestId(null);
+          return;
+        }
+
+        if (
+          connectedWallet?.account.chain &&
+          connectedWallet.account.chain !== tonOrderPayload.network
+        ) {
+          setPurchaseState("error");
+          setPurchaseMessage(
+            tonOrderPayload.network === CHAIN.TESTNET
+              ? copy.messages.tonWalletSwitchToTestnet
+              : copy.messages.tonWalletSwitchToMainnet,
+          );
           return;
         }
 
@@ -1105,17 +1632,18 @@ export function CheckoutForm() {
           tonOrderPayload.validUntil > Math.floor(Date.now() / 1000)
             ? Math.floor(tonOrderPayload.validUntil)
             : fallbackValidUntil;
-        const requestedNetwork =
-          paymentMethod === "ton_dev" ? "-239" : tonOrderPayload.network;
 
         setPurchaseMessage(copy.messages.tonWalletOpenAndConfirm);
         await tonConnectUI.sendTransaction({
           validUntil,
-          network: requestedNetwork,
+          network: tonOrderPayload.network,
           messages: [
             {
-              address: tonOrderPayload.recipientAddress,
-              amount: tonOrderPayload.amountNano,
+              address: tonOrderPayload.transferAddress,
+              amount: tonOrderPayload.transferAmount,
+              ...(tonOrderPayload.transferPayload
+                ? { payload: tonOrderPayload.transferPayload }
+                : {}),
             },
           ],
         });
@@ -1145,11 +1673,13 @@ export function CheckoutForm() {
 
       const record = await readJsonRecord(res);
       if (!res.ok) {
-        const problemMessage = parseProblemMessage(record);
+        const problemMessage = resolveCheckoutProblemMessage(
+          record,
+          copy.messages,
+        );
         setPurchaseState("error");
         setPurchaseMessage(
-          problemMessage ||
-            `${copy.messages.requestFailed} (HTTP ${res.status})`,
+          problemMessage || copy.messages.paymentProviderUnavailable,
         );
         setPurchaseRequestId(null);
         return;
@@ -1178,25 +1708,45 @@ export function CheckoutForm() {
         return;
       }
 
-      const invoiceUrl = extractInvoiceUrl(payload);
+      const invoiceUrl = extractInvoiceUrlSafely(payload);
       if (invoiceUrl) {
-        openInvoiceUrl(invoiceUrl);
-        setPurchaseMessage(copy.messages.invoiceCreatedOpenPayment);
+        setPurchaseInvoiceUrl(invoiceUrl);
+        setPurchaseMessage(
+          openInvoiceUrlSafely(invoiceUrl)
+            ? copy.messages.invoiceCreatedOpenPayment
+            : copy.messages.invoiceCreatedNoLink,
+        );
       } else {
         setPurchaseMessage(copy.messages.invoiceCreatedNoLink);
       }
 
-      startOrderPolling(payload.orderId, {
-        ...invoiceRequestPayload,
-        fulfillmentMethod: method,
-      });
+      try {
+        startOrderPolling(payload.orderId, {
+          ...invoiceRequestPayload,
+          fulfillmentMethod: method,
+        });
+      } catch {
+        // Keep the created invoice accessible even if polling setup fails.
+      }
+      return;
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
 
+      const tonWalletErrorMessage = isTonWalletPaymentMethod(paymentMethod)
+        ? resolveTonWalletSubmitErrorMessage(error, copy.messages)
+        : null;
+
       setPurchaseState("error");
-      setPurchaseMessage(copy.messages.requestFailed);
+      setPurchaseMessage(
+        resolveSubmitErrorMessage({
+          paymentMethod,
+          submitStage,
+          tonWalletErrorMessage,
+          messages: copy.messages,
+        }),
+      );
       setPurchaseRequestId(null);
     } finally {
       if (submitControllerRef.current === controller) {
@@ -1216,11 +1766,9 @@ export function CheckoutForm() {
       return;
     }
 
-    // пока печатает — можно показать "typing"
     setCheckStatus("typing");
     setCheckMessage("");
 
-    // локальная валидация, чтобы не дергать бек
     if (!USERNAME_RE.test(u)) {
       setAvatarUrl(null);
       setDisplayName(null);
@@ -1255,47 +1803,23 @@ export function CheckoutForm() {
           signal: controller.signal,
         });
 
-        let data: UsernameCheckPayload | null = null;
-
-        const payloadText = await res.text();
-        if (payloadText) {
-          try {
-            data = JSON.parse(payloadText);
-          } catch {
-            data = null;
-          }
-        }
-
-        if (!res.ok) {
-          setAvatarUrl(null);
-          setDisplayName(null);
-          setCheckStatus("error");
-
-          const backendMessage =
-            typeof data?.displayName === "string" && data.displayName.trim()
-              ? data.displayName.trim()
-              : typeof data?.status === "string" && data.status.trim()
-                ? data.status.trim()
-                : "";
-
-          setCheckMessage(backendMessage || `HTTP ${res.status}`);
-          return;
-        }
-
+        const data = parseUsernameCheckPayload(await readJsonRecord(res));
         if (!data) {
           throw new Error("Invalid JSON response");
         }
 
-        setCachedUsernameCheck(usernameCheckCacheRef.current, cacheKey, data);
+        if (shouldCacheUsernameCheckPayload(data)) {
+          setCachedUsernameCheck(usernameCheckCacheRef.current, cacheKey, data);
+        }
         applyUsernameCheckPayload(data);
       } catch (e: unknown) {
-        if (e instanceof DOMException && e.name === "AbortError") return; // отменили предыдущий запрос — это нормально
+        if (e instanceof DOMException && e.name === "AbortError") return;
         setAvatarUrl(null);
         setDisplayName(null);
         setCheckStatus("error");
         setCheckMessage(copy.messages.requestFailedGeneric);
       }
-    }, 500); // <-- задержка (500мс)
+    }, 500);
 
     return () => {
       clearTimeout(t);
@@ -1367,7 +1891,7 @@ export function CheckoutForm() {
               status={checkStatus}
               displayName={displayName}
               avatarUrl={avatarUrl}
-              size={22}
+              size={26}
             ></UsernameBadge>
           </span>
 
@@ -1414,25 +1938,12 @@ export function CheckoutForm() {
         </label>
 
         <div className={styles.checkout__inputWrap}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            focusable="false"
-            className={styles.checkout__inputIconAbs}
-          >
-            <circle cx="8" cy="8" r="6" />
-            <path d="M18.09 10.37A6 6 0 1 1 10.37 18.1" />
-            <path d="M7 6h1v4" />
-            <path d="m16 16 1-1" />
-          </svg>
+          {selectedPaymentMethodOption ? (
+            <PaymentMethodIcon
+              method={selectedPaymentMethodOption.value}
+              className={styles.checkout__paymentMethodIconAbs}
+            />
+          ) : null}
 
           <button
             id="currency"
@@ -1535,7 +2046,10 @@ export function CheckoutForm() {
                         }}
                       >
                         <span className={styles.checkout__modalOptionMain}>
-                          <span className={styles.checkout__modalOptionDot} />
+                          <PaymentMethodIcon
+                            method={option.value}
+                            className={styles.checkout__modalOptionIcon}
+                          />
                           <span className={styles.checkout__modalOptionText}>
                             {option.label}
                           </span>
@@ -1774,6 +2288,16 @@ export function CheckoutForm() {
           ? `${purchaseMessage ? " • " : ""}${common.requestIdPrefix}: ${purchaseRequestId}`
           : ""}
       </div>
+
+      {purchaseInvoiceUrl && purchaseState !== "success" ? (
+        <button
+          type="button"
+          className={styles.checkout__invoiceLinkButton}
+          onClick={() => openInvoiceUrl(purchaseInvoiceUrl)}
+        >
+          {copy.button.openInvoice}
+        </button>
+      ) : null}
     </form>
   );
 }

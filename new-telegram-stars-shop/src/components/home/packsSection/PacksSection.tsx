@@ -1,5 +1,13 @@
+import {
+  ArrowRightIcon,
+  CrownIcon,
+  RocketIcon,
+  SparklesIcon,
+  StarIcon,
+} from "@/components/ui/icons";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { getDictionary } from "@/i18n/server";
+import { formatPackPriceUsd } from "@/shared/pricing";
 import styles from "./packsSection.module.scss";
 
 type PackCard = {
@@ -7,7 +15,6 @@ type PackCard = {
   stars: string;
   tag: string;
   tagTone: "muted" | "primary" | "star";
-  price: string;
   bonus: string;
   bonusTone: "muted" | "star";
   description: string;
@@ -22,7 +29,6 @@ const PACKS: PackCard[] = [
     stars: "10,000 Stars",
     tag: "Starter",
     tagTone: "muted",
-    price: "$179.99",
     bonus: "No hidden fees",
     bonusTone: "muted",
     description:
@@ -36,7 +42,6 @@ const PACKS: PackCard[] = [
     stars: "15,000 Stars",
     tag: "Popular",
     tagTone: "primary",
-    price: "$259.99",
     bonus: "+5% bonus",
     bonusTone: "star",
     description:
@@ -50,7 +55,6 @@ const PACKS: PackCard[] = [
     stars: "20,000 Stars",
     tag: "Best value",
     tagTone: "star",
-    price: "$339.99",
     bonus: "+10% bonus",
     bonusTone: "star",
     description:
@@ -64,7 +68,6 @@ const PACKS: PackCard[] = [
     stars: "25,000 Stars",
     tag: "Creator",
     tagTone: "primary",
-    price: "$429.99",
     bonus: "Priority support",
     bonusTone: "muted",
     description:
@@ -76,89 +79,10 @@ const PACKS: PackCard[] = [
 ];
 
 function PackIcon({ name }: { name: PackCard["icon"] }) {
-  if (name === "sparkles") {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M12 3L13.1 8.5 18 10l-4.9 1.5L12 17l-1.1-5.5L6 10l4.9-1.5L12 3z" />
-        <path d="M5 3l.5 2.5L8 6 5.5 6.5 5 9 4.5 6.5 2 6l2.5-.5L5 3z" />
-        <path d="M19 15l.7 3.3L23 19l-3.3.7L19 23l-.7-3.3L15 19l3.3-.7L19 15z" />
-      </svg>
-    );
-  }
-
-  if (name === "rocket") {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M4.5 16.5c-1.5 1.26-2 5.5-2 5.5s4.24-.5 5.5-2c.71-.84.7-2.1-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-        <path d="m12 15-3-3a22 22 0 0 1 3-7 22 22 0 0 1 7-3 22 22 0 0 1-3 7 22 22 0 0 1-7 6z" />
-        <path d="M9 12H4s.55-3.03 2-4.5c1.26-1.26 3.5-2 3.5-2" />
-        <path d="M12 15v5s3.03-.55 4.5-2c1.26-1.26 2-3.5 2-3.5" />
-      </svg>
-    );
-  }
-
-  if (name === "crown") {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M2 6l4 4 3-6 3 6 4-4 4 4-2 12H4L2 10z" />
-        <path d="M6 22h12" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
-    </svg>
-  );
+  if (name === "sparkles") return <SparklesIcon size={20} />;
+  if (name === "rocket") return <RocketIcon size={20} />;
+  if (name === "crown") return <CrownIcon size={20} />;
+  return <StarIcon size={20} />;
 }
 
 export default async function PacksSection() {
@@ -174,7 +98,6 @@ export default async function PacksSection() {
       ...pack,
       stars: copy.stars,
       tag: copy.tag,
-      price: copy.price,
       bonus: copy.bonus,
       description: copy.description,
     };
@@ -228,7 +151,9 @@ export default async function PacksSection() {
               </div>
 
               <div className={styles.packs__priceRow}>
-                <p className={styles.packs__price}>{pack.price}</p>
+                <p className={styles.packs__price}>
+                  {formatPackPriceUsd(pack.amount)}
+                </p>
                 <span
                   className={[
                     styles.packs__bonus,
@@ -245,23 +170,10 @@ export default async function PacksSection() {
 
               <span className={styles.packs__link}>
                 <span>{section.buyPack} </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                  focusable="false"
+                <ArrowRightIcon
+                  size={24}
                   className="lucide lucide-arrow-right"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m12 5 7 7-7 7" />
-                </svg>
+                />
               </span>
             </LocalizedLink>
           ))}

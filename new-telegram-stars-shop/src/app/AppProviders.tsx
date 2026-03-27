@@ -1,6 +1,7 @@
 "use client";
 
 import type { PropsWithChildren } from "react";
+import HashScrollHandler from "@/components/i18n/HashScrollHandler";
 import { I18nProvider } from "@/i18n/client";
 import type { Messages } from "@/i18n/messages";
 import type { Locale } from "@/i18n/types";
@@ -17,8 +18,11 @@ export function AppProviders({
   messages,
 }: AppProvidersProps) {
   return (
-    <I18nProvider initialLocale={locale} initialMessages={messages}>
-      {children}
-    </I18nProvider>
+    <TonProvider>
+      <I18nProvider initialLocale={locale} initialMessages={messages}>
+        <HashScrollHandler />
+        {children}
+      </I18nProvider>
+    </TonProvider>
   );
 }

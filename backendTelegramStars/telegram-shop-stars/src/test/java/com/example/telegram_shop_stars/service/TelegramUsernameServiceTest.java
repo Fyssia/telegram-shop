@@ -90,7 +90,7 @@ class TelegramUsernameServiceTest {
     @Test
     void shouldUsePublicPageFallbackWhenTdlibTimesOut() throws Exception {
         StubTdlibClient tdlib = new StubTdlibClient(fn -> {
-            throw new AssertionError("TDLib should not be called when public lookup succeeds");
+            throw new TimeoutException("tdlib timeout");
         });
         TelegramUsernameService service = new TelegramUsernameService(tdlib) {
             @Override
@@ -105,7 +105,7 @@ class TelegramUsernameServiceTest {
         assertThat(response.status()).isEqualTo("USER");
         assertThat(response.normalizedUsername()).isEqualTo("fyssia");
         assertThat(response.displayName()).isEqualTo("Fyssia");
-        assertThat(tdlib.callCount()).isZero();
+        assertThat(tdlib.callCount()).isEqualTo(1);
     }
 
     @Test
@@ -324,7 +324,7 @@ class TelegramUsernameServiceTest {
     }
 
     @Test
-    void shouldNotUseTdlibForRegularCheckWhenPublicChecksDisabled() {
+    void shouldReturnTdlibConfigurationErrorWhenPublicChecksDisabledAndPublicLookupMisses() {
         TdlibClient tdlib = new TdlibClient(new TdlibProps(1, "hash", "./tdlight-session-test", "", false));
         TelegramUsernameService service = new TelegramUsernameService(tdlib) {
             @Override
@@ -337,7 +337,7 @@ class TelegramUsernameServiceTest {
 
         assertThat(response.ok()).isFalse();
         assertThat(response.status()).isEqualTo("ERROR");
-        assertThat(response.displayName()).isEqualTo("Username lookup backend is unavailable");
+        assertThat(response.displayName()).isEqualTo("TDLib phone number is required when TDLib credentials are configured");
     }
 
     private static final class StubTdlibClient extends TdlibClient {

@@ -8,26 +8,23 @@ export default async function SupportTelegramCta() {
 
   return (
     <aside
-      className={styles.supportTelegramCta}
+      className={styles.bottomCta}
       aria-labelledby="support-telegram-title"
     >
-      <div className={styles.supportTelegramCta__copy}>
-        <h2
-          className={styles.supportTelegramCta__title}
-          id="support-telegram-title"
-        >
+      <div className={styles.bottomCta__copy}>
+        <h2 className={styles.bottomCta__title} id="support-telegram-title">
           {cta.title}
         </h2>
-        <p className={styles.supportTelegramCta__text}>{cta.text}</p>
+        <p className={styles.bottomCta__text}>{cta.text}</p>
       </div>
 
       <a
         href={EXTERNAL_LINKS.telegramSupport}
         target="_blank"
         rel="noreferrer noopener"
-        className={styles.supportTelegramCta__button}
+        className={styles.bottomCta__button}
       >
-        <SendIcon className={styles.supportTelegramCta__buttonIcon} />
+        <SendIcon className={styles.bottomCta__buttonIcon} />
         <span>{cta.button}</span>
       </a>
     </aside>

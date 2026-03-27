@@ -1,3 +1,4 @@
+import { CheckIcon } from "@/components/ui/icons";
 import { getDictionary } from "@/i18n/server";
 import styles from "./comparisonSection.module.scss";
 
@@ -36,7 +37,18 @@ export default async function ComparisonSection() {
                     styles["comparison__listItem--muted"],
                   ].join(" ")}
                 >
-                  {text}
+                  <span
+                    className={[
+                      styles.comparison__listItemIcon,
+                      styles["comparison__listItemIcon--muted"],
+                    ].join(" ")}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.comparison__listItemDot} />
+                  </span>
+                  <span className={styles.comparison__listItemText}>
+                    {text}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -59,8 +71,25 @@ export default async function ComparisonSection() {
 
             <ul className={styles.comparison__list}>
               {section.ourPoints.map((text) => (
-                <li key={text} className={styles.comparison__listItem}>
-                  {text}
+                <li
+                  key={text}
+                  className={[
+                    styles.comparison__listItem,
+                    styles["comparison__listItem--positive"],
+                  ].join(" ")}
+                >
+                  <span
+                    className={[
+                      styles.comparison__listItemIcon,
+                      styles["comparison__listItemIcon--positive"],
+                    ].join(" ")}
+                    aria-hidden="true"
+                  >
+                    <CheckIcon size={16} weight="bold" />
+                  </span>
+                  <span className={styles.comparison__listItemText}>
+                    {text}
+                  </span>
                 </li>
               ))}
             </ul>

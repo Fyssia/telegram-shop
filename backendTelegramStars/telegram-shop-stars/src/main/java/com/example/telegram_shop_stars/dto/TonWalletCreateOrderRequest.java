@@ -20,7 +20,13 @@ public record TonWalletCreateOrderRequest(
         String fulfillmentMethod,
 
         @DecimalMin(value = "0.01", inclusive = true)
-        @Digits(integer = 12, fraction = 2)
-        BigDecimal amount
+        @Digits(integer = 12, fraction = 3)
+        BigDecimal amount,
+
+        @Size(max = 32)
+        String paymentMethod,
+
+        @Size(max = 128)
+        String senderAddress
 ) {
 }

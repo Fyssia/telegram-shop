@@ -110,7 +110,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
-      <body className={appFont.variable}>
+      <body className={appFont.variable} suppressHydrationWarning>
         <Script id="org-jsonld" type="application/ld+json">
           {JSON.stringify(organizationJsonLd)}
         </Script>

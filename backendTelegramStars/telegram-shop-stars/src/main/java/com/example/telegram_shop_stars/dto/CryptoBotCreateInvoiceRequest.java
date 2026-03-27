@@ -21,7 +21,7 @@ public record CryptoBotCreateInvoiceRequest(
 
         @NotNull
         @DecimalMin(value = "0.01", inclusive = true)
-        @Digits(integer = 12, fraction = 2)
+        @Digits(integer = 12, fraction = 3)
         BigDecimal amount,
 
         @Size(max = 16)

@@ -650,6 +650,7 @@
 }
 
 .checkout__referral {
+  scroll-margin-top: 120px;
   width: 100%;
   border-radius: var(--radius-xl);
 
@@ -695,36 +696,61 @@
 }
 
 .checkout__referralTitleRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  column-gap: 16px;
   row-gap: 10px;
   min-width: 0;
 
-  @media (max-width: 960px) {
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
     align-items: flex-start;
+  }
+
+  @media (max-width: 480px) {
+    column-gap: 10px;
+  }
+}
+
+.checkout__referralHeading {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
   }
 }
 
 .checkout__referralTitleIcon {
   flex: 0 0 auto;
   color: var(--color-white);
+
+  @media (max-width: 480px) {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 .checkout__referralTitle {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   font-size: clamp(28px, 5vw, 42px);
   font-weight: 900;
   color: var(--color-white);
   margin: 0;
   min-width: 0;
   white-space: normal;
-  text-wrap: balance;
+  line-height: 1.08;
+  text-wrap: pretty;
 }
 
 .checkout__referralBadge {
   flex: 0 0 auto;
+  justify-self: end;
+  align-self: center;
   padding: 4px 10px;
   border-radius: 999px;
   background-color: rgba(255, 255, 255, 0.15);
@@ -743,7 +769,13 @@
   }
 
   @media (max-width: 640px) {
-    white-space: normal;
+    justify-self: start;
+    align-self: flex-start;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 480px) {
+    max-width: 100%;
   }
 }
 

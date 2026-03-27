@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { TONCONNECT_MANIFEST_CACHE_CONTROL } from "@/config/cache-control";
 
 const APP_NAME =
   process.env.NEXT_PUBLIC_TONCONNECT_APP_NAME?.trim() || "Quack Stars";
@@ -108,8 +109,7 @@ export function GET(request: NextRequest) {
 
   return NextResponse.json(payload, {
     headers: {
-      "Cache-Control":
-        "public, max-age=300, s-maxage=300, stale-while-revalidate=60",
+      "Cache-Control": TONCONNECT_MANIFEST_CACHE_CONTROL,
     },
   });
 }

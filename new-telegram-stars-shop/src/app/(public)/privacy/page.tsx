@@ -3,102 +3,106 @@ import { PAGES } from "@/config/pages.config";
 import { withLocalizedAlternates } from "@/i18n/metadata";
 import { getRequestLocale } from "@/i18n/server";
 import type { Locale } from "@/i18n/types";
-import styles from "../legal.module.scss";
+import LegalPage, { type LegalCopy } from "../legal-page";
 
-type Section = {
-  title: string;
-  body?: string;
-  list?: string[];
-};
-
-type PrivacyCopy = {
-  metaTitle: string;
-  metaDescription: string;
-  kicker: string;
-  title: string;
-  subtitle: string;
-  updatedAt: string;
-  sections: Section[];
-};
-
-const COPY: Record<Locale, PrivacyCopy> = {
+const COPY: Record<Locale, LegalCopy> = {
   en: {
-    metaTitle: "Privacy",
+    metaTitle: "Privacy Policy",
     metaDescription:
-      "Privacy policy for Telegram Stars checkout and support interactions.",
+      "Privacy policy for Telegram Stars checkout, operational data, and support requests.",
     kicker: "Legal",
     title: "Privacy policy",
     subtitle:
-      "This policy explains what data we process for checkout and support, and how we use it to deliver orders safely.",
-    updatedAt: "Updated: March 5, 2026",
+      "This policy explains what operational data we process, why we process it, and how we use it to deliver orders and respond to support requests safely.",
+    updatedAt: "March 27, 2026",
     sections: [
       {
-        title: "1. Data we process",
+        id: "data-we-collect",
+        title: "Data we collect",
         list: [
-          "Telegram username for delivery.",
-          "Order identifiers and payment status.",
-          "Support form data (email and issue details).",
+          "Telegram @username entered for delivery.",
+          "Order identifiers, timestamps, payment status, and delivery status.",
+          "Messages and contact details you submit in support requests.",
         ],
       },
       {
-        title: "2. Why we process it",
+        id: "how-we-use-data",
+        title: "How we use data",
         list: [
-          "To validate order input and complete delivery.",
-          "To track order status and handle disputes.",
-          "To provide customer support and fraud prevention.",
+          "Validate checkout input and complete delivery.",
+          "Investigate failed orders, payment issues, and disputes.",
+          "Operate support, fraud prevention, and basic service monitoring.",
         ],
       },
       {
-        title: "3. Data retention",
-        body: "Order and support records are retained only as long as required for operations, accounting, and dispute resolution.",
+        id: "sharing",
+        title: "Sharing with providers",
+        body: "We share only the data needed for payment processing, hosting, delivery operations, and security with providers involved in running the service.",
       },
       {
-        title: "4. Data sharing",
-        body: "We share only the minimum required data with payment and infrastructure providers used to process orders securely.",
+        id: "retention-protection",
+        title: "Retention and protection",
+        body: "Order and support records are retained only for operational, accounting, security, and dispute-resolution needs. Access is limited to the team members and providers who need it to run the service.",
       },
       {
-        title: "5. Contact",
-        body: "If you have privacy questions, contact support and include your request ID for faster handling.",
+        id: "privacy-requests",
+        title: "Privacy requests",
+        body: "If you need a correction or have a privacy-related request, contact support and include the order details needed to locate your record. Response options may depend on the data we must retain for operations or legal obligations.",
+      },
+      {
+        id: "contact",
+        title: "Contact",
+        body: "For privacy questions, use support and include your request ID when available.",
       },
     ],
   },
   ru: {
     metaTitle: "Конфиденциальность",
     metaDescription:
-      "Политика конфиденциальности сервиса покупки звёзд Telegram и обращений в поддержку.",
+      "Политика конфиденциальности для оформления заказов на звёзды Telegram, операционных данных и обращений в поддержку.",
     kicker: "Документы",
     title: "Политика конфиденциальности",
     subtitle:
-      "В этой политике указано, какие данные мы обрабатываем для оформления заказа и поддержки, и как используем их для безопасной доставки.",
-    updatedAt: "Обновлено: 5 марта 2026",
+      "В этой политике описано, какие операционные данные мы обрабатываем, зачем они нужны и как используются для безопасной доставки и обработки обращений в поддержку.",
+    updatedAt: "27 марта 2026",
     sections: [
       {
-        title: "1. Какие данные мы обрабатываем",
+        id: "data-we-collect",
+        title: "Какие данные мы собираем",
         list: [
-          "Имя пользователя Telegram для доставки.",
-          "Идентификаторы заказа и статус оплаты.",
-          "Данные формы поддержки (адрес электронной почты и описание проблемы).",
+          "Telegram @username, указанный для доставки.",
+          "Идентификаторы заказа, временные метки, статус оплаты и статус доставки.",
+          "Сообщения и контактные данные, которые вы отправляете в поддержку.",
         ],
       },
       {
-        title: "2. Для чего мы их используем",
+        id: "how-we-use-data",
+        title: "Как мы используем данные",
         list: [
-          "Для валидации данных заказа и завершения доставки.",
-          "Для отслеживания статуса и обработки спорных случаев.",
-          "Для поддержки пользователей и предотвращения мошенничества.",
+          "Проверяем данные заказа и завершаем доставку.",
+          "Разбираем неуспешные заказы, платёжные проблемы и спорные случаи.",
+          "Обеспечиваем поддержку, антифрод и базовый мониторинг сервиса.",
         ],
       },
       {
-        title: "3. Срок хранения",
-        body: "Данные заказов и поддержки хранятся только столько, сколько необходимо для операций, учета и урегулирования споров.",
+        id: "sharing",
+        title: "Передача провайдерам",
+        body: "Мы передаём только те данные, которые нужны для обработки платежей, хостинга, доставки и безопасности, провайдерам, участвующим в работе сервиса.",
       },
       {
-        title: "4. Передача данных",
-        body: "Мы передаем только минимально необходимый объем данных платежным и инфраструктурным провайдерам для безопасной обработки заказов.",
+        id: "retention-protection",
+        title: "Хранение и защита",
+        body: "Данные заказов и обращений хранятся только для операционных, бухгалтерских, защитных и спорных задач. Доступ к ним есть только у тех участников команды и провайдеров, которым это действительно нужно для работы сервиса.",
       },
       {
-        title: "5. Контакты",
-        body: "По вопросам конфиденциальности обращайтесь в поддержку и указывайте ID запроса для ускоренной обработки.",
+        id: "privacy-requests",
+        title: "Запросы по конфиденциальности",
+        body: "Если вам нужно внести исправление или отправить запрос по конфиденциальности, обратитесь в поддержку и приложите данные заказа, по которым можно найти вашу запись. Варианты ответа могут зависеть от того, какие данные мы обязаны хранить для работы сервиса или юридических обязательств.",
+      },
+      {
+        id: "contact",
+        title: "Контакты",
+        body: "По вопросам конфиденциальности обращайтесь в поддержку и по возможности указывайте ID запроса.",
       },
     ],
   },
@@ -121,39 +125,5 @@ export default async function PrivacyPage() {
   const locale = await getRequestLocale();
   const copy = COPY[locale];
 
-  return (
-    <main className={styles.legal}>
-      <section className={styles.legal__hero}>
-        <div className={styles.legal__heroBg} aria-hidden="true" />
-        <div className={styles.legal__heroInner}>
-          <p className={styles.legal__kicker}>{copy.kicker}</p>
-          <h1 className={styles.legal__title}>{copy.title}</h1>
-          <p className={styles.legal__subtitle}>{copy.subtitle}</p>
-        </div>
-      </section>
-
-      <section className={styles.legal__content}>
-        <div className={styles.legal__contentInner}>
-          <p className={styles.legal__meta}>{copy.updatedAt}</p>
-          {copy.sections.map((section) => (
-            <article key={section.title} className={styles.legal__section}>
-              <h2 className={styles.legal__sectionTitle}>{section.title}</h2>
-              {section.body ? (
-                <p className={styles.legal__sectionBody}>{section.body}</p>
-              ) : null}
-              {section.list ? (
-                <ul className={styles.legal__list}>
-                  {section.list.map((item) => (
-                    <li key={item} className={styles.legal__listItem}>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return <LegalPage locale={locale} documentKey="privacy" copy={copy} />;
 }

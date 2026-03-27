@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { API_NO_STORE_CACHE_CONTROL } from "@/config/cache-control";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,16 @@ type SupportPayload = {
   email: string;
   message: string;
 };
+
+function jsonNoStore(body: unknown, init?: ResponseInit) {
+  const headers = new Headers(init?.headers);
+  headers.set("Cache-Control", API_NO_STORE_CACHE_CONTROL);
+
+  return NextResponse.json(body, {
+    ...init,
+    headers,
+  });
+}
 
 function isValidEmail(email: string): boolean {
   return (
@@ -130,7 +141,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
+    return jsonNoStore(
       { ok: false, code: "INVALID_JSON", requestId },
       { status: 400 },
     );
@@ -158,7 +169,7 @@ export async function POST(request: Request) {
   };
 
   if (!isValidEmail(payload.email) || !isValidMessage(payload.message)) {
-    return NextResponse.json(
+    return jsonNoStore(
       { ok: false, code: "VALIDATION_ERROR", requestId },
       { status: 400 },
     );
@@ -168,7 +179,7 @@ export async function POST(request: Request) {
     Boolean(SUPPORT_TELEGRAM_BOT_TOKEN) && Boolean(SUPPORT_TELEGRAM_CHAT_ID);
   const hasWebhookTransport = Boolean(SUPPORT_WEBHOOK_URL);
   if (!hasTelegramTransport && !hasWebhookTransport) {
-    return NextResponse.json(
+    return jsonNoStore(
       { ok: false, code: "SUPPORT_UNAVAILABLE", requestId },
       { status: 503 },
     );
@@ -185,15 +196,15 @@ export async function POST(request: Request) {
     ]);
 
     if (!sentToTelegram && !sentToWebhook) {
-      return NextResponse.json(
+      return jsonNoStore(
         { ok: false, code: "SUPPORT_DELIVERY_FAILED", requestId },
         { status: 502 },
       );
     }
 
-    return NextResponse.json({ ok: true, requestId });
+    return jsonNoStore({ ok: true, requestId });
   } catch {
-    return NextResponse.json(
+    return jsonNoStore(
       { ok: false, code: "SUPPORT_DELIVERY_FAILED", requestId },
       { status: 502 },
     );

@@ -14,8 +14,8 @@ tg:
 
 cryptobot:
   testnet:
-    enabled: ${CRYPTOBOT_TESTNET_ENABLED:true}
-    token: ${CRYPTOBOT_TESTNET_TOKEN:55020:AABAAjLvSb4wpuotjLsKq6xiG7WYi8WVmC6}
+    enabled: ${CRYPTOBOT_TESTNET_ENABLED:false}
+    token: ${CRYPTOBOT_TESTNET_TOKEN:}
     base-url: ${CRYPTOBOT_TESTNET_BASE_URL:https://testnet-pay.crypt.bot/api}
     provider-name: ${CRYPTOBOT_PROVIDER_NAME:cryptobot_testnet}
     poll-delay-ms: ${CRYPTOBOT_POLL_DELAY_MS:5000}
@@ -28,22 +28,45 @@ tonwallet:
   provider-name: ${TON_WALLET_PROVIDER_NAME:ton_wallet}
   recipient-address: ${TON_WALLET_RECIPIENT_ADDRESS:UQDIGhi7BWH-oFPfYzEUhmBrRthQplfB4Btl8qgkubcyz7EW}
   network: ${TON_WALLET_NETWORK:-239}
+  default-chain: ${TON_WALLET_DEFAULT_CHAIN:mainnet}
+  mainnet-recipient-address: ${TON_WALLET_MAINNET_RECIPIENT_ADDRESS:${TON_WALLET_RECIPIENT_ADDRESS:UQDIGhi7BWH-oFPfYzEUhmBrRthQplfB4Btl8qgkubcyz7EW}}
+  testnet-recipient-address: ${TON_WALLET_TESTNET_RECIPIENT_ADDRESS:${TON_WALLET_RECIPIENT_ADDRESS:UQDIGhi7BWH-oFPfYzEUhmBrRthQplfB4Btl8qgkubcyz7EW}}
+  usdt-mainnet-master-address: ${TON_WALLET_USDT_MAINNET_MASTER_ADDRESS:EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs}
+  usdt-testnet-master-address: ${TON_WALLET_USDT_TESTNET_MASTER_ADDRESS:}
+  tonpay-mainnet-base-url: ${TON_WALLET_TONPAY_MAINNET_BASE_URL:https://pay.ton.org}
+  tonpay-testnet-base-url: ${TON_WALLET_TONPAY_TESTNET_BASE_URL:https://dev.pay.ton.org}
+  tonpay-api-key: ${TON_WALLET_TONPAY_API_KEY:}
   usd-per-ton: ${TON_WALLET_USD_PER_TON:3.00}
   payment-window-seconds: ${TON_WALLET_PAYMENT_WINDOW_SECONDS:900}
   amount-nonce-max-nano: ${TON_WALLET_AMOUNT_NONCE_MAX_NANO:999999}
   poll-delay-ms: ${TON_WALLET_POLL_DELAY_MS:5000}
   poll-batch-size: ${TON_WALLET_POLL_BATCH_SIZE:100}
-  toncenter-base-url: ${TON_WALLET_TONCENTER_BASE_URL:https://toncenter.com/api/v2}
-  toncenter-api-key: ${TON_WALLET_TONCENTER_API_KEY:}
-  toncenter-tx-limit: ${TON_WALLET_TONCENTER_TX_LIMIT:50}
   connect-timeout-ms: ${TON_WALLET_CONNECT_TIMEOUT_MS:5000}
   read-timeout-ms: ${TON_WALLET_READ_TIMEOUT_MS:10000}
+  blockchain-check-interval-ms: ${TON_WALLET_BLOCKCHAIN_CHECK_INTERVAL_MS:15000}
+  blockchain-failure-retry-delay-ms: ${TON_WALLET_BLOCKCHAIN_FAILURE_RETRY_DELAY_MS:60000}
+  dev-auto-pay-enabled: ${TON_WALLET_DEV_AUTO_PAY_ENABLED:true}
 
 fragment:
   enabled: ${FRAGMENT_ENABLED:true}
   local-api-url: ${FRAGMENT_LOCAL_API_URL:http://127.0.0.1:8080/api}
   connect-timeout-ms: ${FRAGMENT_CONNECT_TIMEOUT_MS:10000}
   read-timeout-ms: ${FRAGMENT_READ_TIMEOUT_MS:180000}
+  delivery-max-attempts: ${FRAGMENT_DELIVERY_MAX_ATTEMPTS:8}
+  delivery-retry-delay-ms: ${FRAGMENT_DELIVERY_RETRY_DELAY_MS:5000}
+  delivery-max-retry-delay-ms: ${FRAGMENT_DELIVERY_MAX_RETRY_DELAY_MS:120000}
+  delivery-lease-ms: ${FRAGMENT_DELIVERY_LEASE_MS:240000}
+
+balance:
+  local-api-url: ${BALANCE_LOCAL_API_URL:http://127.0.0.1:8080/api/balance}
+  connect-timeout-ms: ${BALANCE_CONNECT_TIMEOUT_MS:5000}
+  read-timeout-ms: ${BALANCE_READ_TIMEOUT_MS:30000}
+  max-attempts: ${BALANCE_MAX_ATTEMPTS:2}
+  retry-backoff-ms: ${BALANCE_RETRY_BACKOFF_MS:250}
+  reservation-max-retries: ${BALANCE_RESERVATION_MAX_RETRIES:20}
+  unpaid-reservation-ttl-ms: ${BALANCE_UNPAID_RESERVATION_TTL_MS:900000}
+  cleanup-batch-size: ${BALANCE_CLEANUP_BATCH_SIZE:200}
+  cleanup-delay-ms: ${BALANCE_CLEANUP_DELAY_MS:60000}
 
 app:
   rate-limit:

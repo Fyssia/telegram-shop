@@ -18,6 +18,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "payments")
@@ -49,7 +50,7 @@ public class PaymentEntity {
     @Column(name = "status", columnDefinition = "payment_status", nullable = false)
     private PaymentStatus status;
 
-    @Column(name = "amount", nullable = false, precision = 14, scale = 2)
+    @Column(name = "amount", nullable = false, precision = 14, scale = 3)
     private BigDecimal amount;
 
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -62,8 +63,19 @@ public class PaymentEntity {
     @Column(name = "failure_message")
     private String failureMessage;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "request_payload")
+    private Map<String, Object> requestPayload;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "response_payload")
+    private Map<String, Object> responsePayload;
+
     @Column(name = "expires_at")
     private OffsetDateTime expiresAt;
+
+    @Column(name = "next_poll_at")
+    private OffsetDateTime nextPollAt;
 
     @Column(name = "captured_at")
     private OffsetDateTime capturedAt;
@@ -158,12 +170,36 @@ public class PaymentEntity {
         this.failureMessage = failureMessage;
     }
 
+    public Map<String, Object> getRequestPayload() {
+        return requestPayload;
+    }
+
+    public void setRequestPayload(Map<String, Object> requestPayload) {
+        this.requestPayload = requestPayload;
+    }
+
+    public Map<String, Object> getResponsePayload() {
+        return responsePayload;
+    }
+
+    public void setResponsePayload(Map<String, Object> responsePayload) {
+        this.responsePayload = responsePayload;
+    }
+
     public OffsetDateTime getExpiresAt() {
         return expiresAt;
     }
 
     public void setExpiresAt(OffsetDateTime expiresAt) {
         this.expiresAt = expiresAt;
+    }
+
+    public OffsetDateTime getNextPollAt() {
+        return nextPollAt;
+    }
+
+    public void setNextPollAt(OffsetDateTime nextPollAt) {
+        this.nextPollAt = nextPollAt;
     }
 
     public OffsetDateTime getCapturedAt() {

@@ -1,4 +1,10 @@
+import { formatPackPriceUsd } from "../shared/pricing";
 import type { Locale } from "./types";
+
+const PACK_PRICE_10000 = formatPackPriceUsd(10_000);
+const PACK_PRICE_15000 = formatPackPriceUsd(15_000);
+const PACK_PRICE_20000 = formatPackPriceUsd(20_000);
+const PACK_PRICE_25000 = formatPackPriceUsd(25_000);
 
 const en = {
   common: {
@@ -19,7 +25,7 @@ const en = {
       home: {
         title: "Buy Telegram Stars in seconds",
         description:
-          "Choose a pack, pay securely, and receive Stars instantly. Perfect for tipping, giveaways, and premium content.",
+          "Choose a pack, pay securely, and receive Stars instantly. Built for giveaways, rewards, and other Telegram activities.",
       },
       packs: {
         title: "Rates & packs",
@@ -118,12 +124,13 @@ const en = {
       cryptoBot: "CryptoBot",
       usdtTon: "USDT (TON)",
       ton: "TON",
-      tonDev: "TON DEV",
+      tonDev: "TON DEV (instant)",
       usdtTrc20: "USDT (TRC20)",
     },
     button: {
       buy: "Buy Stars",
       buyPremium: "Buy Telegram Premium",
+      openInvoice: "Open invoice",
       processing: "Processing...",
     },
     helper: {
@@ -136,13 +143,25 @@ const en = {
       checkingUsername: "Checking username...",
       invalidAmount: "Choose an amount from 50 to 25,000 Stars.",
       invalidPremiumDuration: "Choose 3, 6, or 12 months for Premium gift.",
+      checkingBalance: "Checking available balance...",
       creatingInvoice: "Creating payment invoice...",
+      cryptoBotInvoiceCreateFailed:
+        "CryptoBot couldn’t create the payment invoice. Please try again.",
       creatingTonOrder: "Preparing TON Wallet payment...",
       tonWalletConnect: "Connect TON Wallet to continue payment.",
+      tonWalletPaymentFailed:
+        "TON Wallet didn’t complete the payment request. Open the wallet and try again.",
+      tonWalletRejected: "Payment was cancelled in TON Wallet.",
+      tonWalletInsufficientFunds:
+        "There are not enough funds in your wallet for this payment. Top up the wallet and try again.",
       tonWalletOpenAndConfirm:
         "Transaction prepared. Confirm payment in your TON Wallet.",
       tonWalletTransactionSubmitted:
         "Transaction submitted. Waiting for blockchain confirmation...",
+      tonWalletSwitchToMainnet: "Switch TON Wallet to mainnet and try again.",
+      tonWalletSwitchToTestnet: "Switch TON Wallet to testnet and try again.",
+      tonWalletStatusCheckFailed:
+        "Couldn’t verify TON Wallet payment status. If you already sent the transaction, wait a bit and refresh.",
       invoiceCreatedOpenPayment:
         "Invoice created. Complete payment in CryptoBot window.",
       invoiceCreatedNoLink:
@@ -153,11 +172,19 @@ const en = {
       paymentFailedStatusPrefix: "Payment status",
       paymentTimeout:
         "Payment check timed out. If you already paid, wait a bit and refresh.",
+      invoiceStatusCheckFailed:
+        "Couldn’t verify payment status. If you already paid, wait a bit and refresh.",
       invalidInvoiceResponse: "Invalid invoice response from payment provider.",
       submitting: "Creating order...",
       submittingPremium: "Creating Telegram Premium gift...",
       confirmed: "Order confirmed. Stars are being delivered.",
       confirmedPremium: "Order confirmed. Telegram Premium is being delivered.",
+      insufficientBalance:
+        "This order can’t be created right now because the service balance is insufficient. Please try again later.",
+      balanceCheckUnavailable:
+        "Couldn’t verify available balance right now. Please try again.",
+      paymentProviderUnavailable:
+        "Payment service is temporarily unavailable. Please try again.",
       requestFailed: "Couldn’t create order. Please try again.",
       invalidUsernameFormat:
         "Use 5-32 characters: letters, numbers, underscore.",
@@ -180,7 +207,7 @@ const en = {
       titleStart: "Buy Telegram Stars",
       titleAccent: "in seconds.",
       subtitle:
-        "Choose a pack, pay securely, and receive Stars instantly. Perfect for tipping, giveaways, and premium content.",
+        "Choose a pack, pay securely, and receive Stars instantly. Built for giveaways, rewards, and other Telegram activities.",
       buyStars: "Start checkout",
       buyPremium: "View packs",
       badges: {
@@ -228,7 +255,7 @@ const en = {
         {
           stars: "10,000 Stars",
           tag: "Starter",
-          price: "$179.99",
+          price: PACK_PRICE_10000,
           bonus: "No hidden fees",
           description:
             "Perfect for recurring tips, giveaways, and team rewards. Delivered instantly after checkout.",
@@ -236,7 +263,7 @@ const en = {
         {
           stars: "15,000 Stars",
           tag: "Popular",
-          price: "$259.99",
+          price: PACK_PRICE_15000,
           bonus: "+5% bonus",
           description:
             "Great for active creators and frequent campaigns. A balanced pack for steady usage.",
@@ -244,7 +271,7 @@ const en = {
         {
           stars: "20,000 Stars",
           tag: "Best value",
-          price: "$339.99",
+          price: PACK_PRICE_20000,
           bonus: "+10% bonus",
           description:
             "Built for channels and communities with regular volume. Better value at scale.",
@@ -252,7 +279,7 @@ const en = {
         {
           stars: "25,000 Stars",
           tag: "Creator",
-          price: "$429.99",
+          price: PACK_PRICE_25000,
           bonus: "Priority support",
           description:
             "For power users and businesses. Optimized for bulk purchases and frequent sending.",
@@ -296,11 +323,11 @@ const en = {
       },
     },
     comparisonSection: {
-      title: "Why buy Stars here",
+      title: "Why you should buy Stars here",
       subtitle:
         "A Telegram-first experience: transparent rates, instant delivery, and support you can reach.",
       randomSellers: "Random sellers",
-      ourStore: "Our Stars Store",
+      ourStore: "Quack Stars",
       recommended: "RECOMMENDED",
       traditionalPoints: [
         "Hidden fees & unclear rates",
@@ -353,7 +380,7 @@ const en = {
         {
           title: "10,000 Stars",
           pill: "Popular",
-          price: "$179.99",
+          price: PACK_PRICE_10000,
           priceNote: "approx.",
           priceMeta: "includes bonus",
           features: [
@@ -365,7 +392,7 @@ const en = {
         {
           title: "15,000 Stars",
           pill: "Quick",
-          price: "$259.99",
+          price: PACK_PRICE_15000,
           priceNote: "approx.",
           priceMeta: "includes bonus",
           features: [
@@ -379,7 +406,7 @@ const en = {
         {
           title: "20,000 Stars",
           pill: "Events",
-          price: "$339.99",
+          price: PACK_PRICE_20000,
           priceNote: "approx.",
           priceMeta: "includes bonus",
           features: [
@@ -391,7 +418,7 @@ const en = {
         {
           title: "25,000 Stars",
           pill: "Bulk",
-          price: "$429.99",
+          price: PACK_PRICE_25000,
           priceNote: "approx.",
           priceMeta: "includes bonus",
           features: [
@@ -673,7 +700,7 @@ const ru: Messages = {
       home: {
         title: "Купить звёзды Telegram за секунды",
         description:
-          "Выберите пакет, безопасно оплатите заказ и получите звёзды Telegram мгновенно. Отлично подходит для поддержки авторов, розыгрышей и платного контента.",
+          "Выберите пакет, безопасно оплатите заказ и получите звёзды Telegram мгновенно. Подходит для розыгрышей, бонусов и других активностей в Telegram.",
       },
       packs: {
         title: "Тарифы и пакеты",
@@ -772,12 +799,13 @@ const ru: Messages = {
       cryptoBot: "CryptoBot",
       usdtTon: "USDT (TON)",
       ton: "TON",
-      tonDev: "TON DEV",
+      tonDev: "TON DEV (мгновенно)",
       usdtTrc20: "USDT (TRC20)",
     },
     button: {
       buy: "Купить звёзды",
       buyPremium: "Купить Telegram Premium",
+      openInvoice: "Открыть инвойс",
       processing: "Обработка...",
     },
     helper: {
@@ -792,13 +820,27 @@ const ru: Messages = {
       invalidAmount: "Выберите количество от 50 до 25 000 звёзд.",
       invalidPremiumDuration:
         "Выберите срок подарка Premium: 3, 6 или 12 месяцев.",
+      checkingBalance: "Проверяем доступный баланс...",
       creatingInvoice: "Создаём счёт на оплату...",
+      cryptoBotInvoiceCreateFailed:
+        "CryptoBot не смог создать счёт на оплату. Попробуйте ещё раз.",
       creatingTonOrder: "Подготавливаем оплату через TON Wallet...",
       tonWalletConnect: "Подключите TON Wallet, чтобы продолжить оплату.",
+      tonWalletPaymentFailed:
+        "TON Wallet не завершил запрос на оплату. Откройте кошелёк и попробуйте снова.",
+      tonWalletRejected: "Оплата была отменена в TON Wallet.",
+      tonWalletInsufficientFunds:
+        "На кошельке недостаточно средств для этой оплаты. Пополните кошелёк и попробуйте снова.",
       tonWalletOpenAndConfirm:
         "Транзакция подготовлена. Подтвердите оплату в TON Wallet.",
       tonWalletTransactionSubmitted:
         "Транзакция отправлена. Ждём подтверждение в блокчейне...",
+      tonWalletSwitchToMainnet:
+        "Переключите TON Wallet на mainnet и попробуйте снова.",
+      tonWalletSwitchToTestnet:
+        "Переключите TON Wallet на testnet и попробуйте снова.",
+      tonWalletStatusCheckFailed:
+        "Не удалось проверить статус оплаты в TON Wallet. Если транзакция уже отправлена, подождите немного и обновите страницу.",
       invoiceCreatedOpenPayment:
         "Инвойс создан. Завершите оплату в окне CryptoBot.",
       invoiceCreatedNoLink:
@@ -809,11 +851,19 @@ const ru: Messages = {
       paymentFailedStatusPrefix: "Статус оплаты",
       paymentTimeout:
         "Проверка оплаты превысила лимит ожидания. Если вы уже оплатили, подождите и обновите страницу.",
+      invoiceStatusCheckFailed:
+        "Не удалось проверить статус оплаты. Если вы уже оплатили, подождите немного и обновите страницу.",
       invalidInvoiceResponse: "Некорректный ответ от платежного провайдера.",
       submitting: "Создаём заказ...",
       submittingPremium: "Создаём подарок Telegram Premium...",
       confirmed: "Заказ подтверждён. Звёзды уже отправляются.",
       confirmedPremium: "Заказ подтверждён. Telegram Premium уже отправляется.",
+      insufficientBalance:
+        "Сейчас невозможно создать заказ из-за недостаточного баланса сервиса. Попробуйте позже.",
+      balanceCheckUnavailable:
+        "Сейчас не удалось проверить доступный баланс. Попробуйте ещё раз.",
+      paymentProviderUnavailable:
+        "Платёжный сервис сейчас недоступен. Попробуйте ещё раз.",
       requestFailed: "Не удалось создать заказ. Попробуйте ещё раз.",
       invalidUsernameFormat:
         "Используйте от 5 до 32 символов: буквы, цифры и подчёркивание.",
@@ -837,7 +887,7 @@ const ru: Messages = {
       titleStart: "Купить звёзды Telegram",
       titleAccent: "за секунды.",
       subtitle:
-        "Выберите пакет, безопасно оплатите заказ и получите звёзды Telegram мгновенно. Отлично подходит для поддержки авторов, розыгрышей и платного контента.",
+        "Выберите пакет, безопасно оплатите заказ и получите звёзды Telegram мгновенно. Подходит для розыгрышей, бонусов и других активностей в Telegram.",
       buyStars: "Перейти к оплате",
       buyPremium: "Смотреть пакеты",
       badges: {
@@ -885,7 +935,7 @@ const ru: Messages = {
         {
           stars: "10 000 звёзд",
           tag: "Старт",
-          price: "$179.99",
+          price: PACK_PRICE_10000,
           bonus: "Без скрытых комиссий",
           description:
             "Подходит для регулярной поддержки авторов, розыгрышей и наград команде. Доставка — сразу после оплаты.",
@@ -893,7 +943,7 @@ const ru: Messages = {
         {
           stars: "15 000 звёзд",
           tag: "Популярный",
-          price: "$259.99",
+          price: PACK_PRICE_15000,
           bonus: "+5% бонус",
           description:
             "Отличный выбор для активных авторов и частых кампаний. Сбалансированный пакет для постоянного использования.",
@@ -901,7 +951,7 @@ const ru: Messages = {
         {
           stars: "20 000 звёзд",
           tag: "Лучшая цена",
-          price: "$339.99",
+          price: PACK_PRICE_20000,
           bonus: "+10% бонус",
           description:
             "Хороший вариант для каналов и сообществ с регулярной активностью. Чем больше объём, тем выгоднее цена.",
@@ -909,7 +959,7 @@ const ru: Messages = {
         {
           stars: "25 000 звёзд",
           tag: "Для авторов",
-          price: "$429.99",
+          price: PACK_PRICE_25000,
           bonus: "Приоритетная поддержка",
           description:
             "Для активных авторов и команд. Оптимален для крупных и регулярных покупок.",
@@ -953,7 +1003,7 @@ const ru: Messages = {
       },
     },
     comparisonSection: {
-      title: "Почему покупать звёзды у нас",
+      title: "Почему нужно покупать звёзды у нас",
       subtitle:
         "Опыт, ориентированный на Telegram: прозрачные тарифы, мгновенная доставка и доступная поддержка.",
       randomSellers: "Случайные продавцы",
@@ -1010,7 +1060,7 @@ const ru: Messages = {
         {
           title: "10 000 звёзд",
           pill: "Популярный",
-          price: "$179.99",
+          price: PACK_PRICE_10000,
           priceNote: "примерно",
           priceMeta: "включая бонус",
           features: [
@@ -1022,7 +1072,7 @@ const ru: Messages = {
         {
           title: "15 000 звёзд",
           pill: "Быстро",
-          price: "$259.99",
+          price: PACK_PRICE_15000,
           priceNote: "примерно",
           priceMeta: "включая бонус",
           features: [
@@ -1036,7 +1086,7 @@ const ru: Messages = {
         {
           title: "20 000 звёзд",
           pill: "События",
-          price: "$339.99",
+          price: PACK_PRICE_20000,
           priceNote: "примерно",
           priceMeta: "включая бонус",
           features: [
@@ -1048,7 +1098,7 @@ const ru: Messages = {
         {
           title: "25 000 звёзд",
           pill: "Опт",
-          price: "$429.99",
+          price: PACK_PRICE_25000,
           priceNote: "примерно",
           priceMeta: "включая бонус",
           features: [

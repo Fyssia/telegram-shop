@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbopack": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
+    "typecheck": "tsc --noEmit",
     "format": "biome format --write"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@ton-pay/api": "^0.3.0",
     "@ton-pay/ui-react": "^0.3.0",
     "@tonconnect/ui": "^2.4.1",

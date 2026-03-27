@@ -83,7 +83,9 @@ public class TdlibClient implements DisposableBean {
         if (phone != null && !phone.isBlank()) {
             return AuthenticationSupplier.user(phone);
         }
-        return AuthenticationSupplier.consoleLogin();
+        throw new IllegalStateException(
+                "TDLib phone number is required when TDLib credentials are configured"
+        );
     }
 
     @Override

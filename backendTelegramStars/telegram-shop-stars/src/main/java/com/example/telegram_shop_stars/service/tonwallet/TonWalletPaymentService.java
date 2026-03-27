@@ -3,22 +3,17 @@ package com.example.telegram_shop_stars.service.tonwallet;
 import com.example.telegram_shop_stars.dto.TonWalletCreateOrderRequest;
 import com.example.telegram_shop_stars.dto.TonWalletOrderResponse;
 import com.example.telegram_shop_stars.dto.TonWalletPollResponse;
-import com.example.telegram_shop_stars.entity.CustomerEntity;
 import com.example.telegram_shop_stars.entity.OrderEntity;
-import com.example.telegram_shop_stars.entity.OrderSource;
 import com.example.telegram_shop_stars.entity.OrderStatus;
-import com.example.telegram_shop_stars.entity.OrderStatusHistoryEntity;
 import com.example.telegram_shop_stars.entity.PaymentEntity;
 import com.example.telegram_shop_stars.entity.PaymentStatus;
-import com.example.telegram_shop_stars.repository.CustomerRepository;
+import com.example.telegram_shop_stars.error.ApiProblemException;
 import com.example.telegram_shop_stars.repository.OrderRepository;
-import com.example.telegram_shop_stars.repository.OrderStatusHistoryRepository;
 import com.example.telegram_shop_stars.repository.PaymentRepository;
-import com.example.telegram_shop_stars.service.TelegramUsernameService;
-import com.example.telegram_shop_stars.service.fragment.FragmentApiClient;
-import com.example.telegram_shop_stars.service.fragment.FragmentApiException;
-import com.example.telegram_shop_stars.service.tonwallet.TonWalletBlockchainClient.TonWalletBlockchainException;
-import com.example.telegram_shop_stars.service.tonwallet.TonWalletBlockchainClient.TonWalletIncomingTransfer;
+import com.example.telegram_shop_stars.service.pricing.OrderPricing;
+import com.example.telegram_shop_stars.service.tonwallet.TonPayApiClient.TonPayApiException;
+import com.example.telegram_shop_stars.service.tonwallet.TonPayApiClient.TonPayTransfer;
+import com.example.telegram_shop_stars.service.tonwallet.TonPayApiClient.TonPayTransferStatus;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
@@ -32,19 +27,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -54,17 +42,8 @@ import java.util.Set;
 public class TonWalletPaymentService {
 
     private static final Logger log = LoggerFactory.getLogger(TonWalletPaymentService.class);
-    private static final java.util.regex.Pattern USERNAME_RE = java.util.regex.Pattern.compile("^[a-z0-9_]{5,32}$");
-    private static final java.util.regex.Pattern PAYMENT_REFERENCE_RE = java.util.regex.Pattern.compile("^tw-(\\d+)-(\\d+)$");
-    private static final String FULFILLMENT_BUY_STARS = "buyStars";
-    private static final String FULFILLMENT_GIFT_PREMIUM = "giftPremium";
-    private static final Set<Integer> PREMIUM_MONTH_OPTIONS = Set.of(3, 6, 12);
-    private static final BigDecimal STARS_UNIT_PRICE_USD = new BigDecimal("0.018");
-    private static final Map<Integer, BigDecimal> PREMIUM_MONTH_PRICES_USD = Map.of(
-            3, new BigDecimal("12.99"),
-            6, new BigDecimal("23.99"),
-            12, new BigDecimal("42.99")
-    );
+    private static final String FULFILLMENT_GIFT_PREMIUM = OrderPricing.FULFILLMENT_GIFT_PREMIUM;
+    private static final String PAYMENT_PROVIDER_UNAVAILABLE_CODE = "PAYMENT_PROVIDER_UNAVAILABLE";
 
     private static final Set<PaymentStatus> POLLABLE_PAYMENT_STATUSES = Set.of(
             PaymentStatus.created,
@@ -89,14 +68,11 @@ public class TonWalletPaymentService {
             OrderStatus.expired
     );
 
-    private final CustomerRepository customerRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
-    private final FragmentApiClient fragmentApiClient;
-    private final TelegramUsernameService telegramUsernameService;
     private final TonWalletProperties properties;
-    private final TonWalletBlockchainClient blockchainClient;
+    private final TonPayApiClient tonPayApiClient;
+    private final TonWalletOrderService orderService;
     private final TransactionTemplate txTemplate;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Counter createRequests;
@@ -106,24 +82,18 @@ public class TonWalletPaymentService {
     private final Counter fulfillmentSuccess;
     private final Counter fulfillmentFailure;
 
-    public TonWalletPaymentService(CustomerRepository customerRepository,
-                                   OrderRepository orderRepository,
+    public TonWalletPaymentService(OrderRepository orderRepository,
                                    PaymentRepository paymentRepository,
-                                   OrderStatusHistoryRepository orderStatusHistoryRepository,
-                                   FragmentApiClient fragmentApiClient,
-                                   TelegramUsernameService telegramUsernameService,
                                    TonWalletProperties properties,
-                                   TonWalletBlockchainClient blockchainClient,
+                                   TonPayApiClient tonPayApiClient,
+                                   TonWalletOrderService orderService,
                                    PlatformTransactionManager transactionManager,
                                    MeterRegistry meterRegistry) {
-        this.customerRepository = customerRepository;
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
-        this.orderStatusHistoryRepository = orderStatusHistoryRepository;
-        this.fragmentApiClient = fragmentApiClient;
-        this.telegramUsernameService = telegramUsernameService;
         this.properties = properties;
-        this.blockchainClient = blockchainClient;
+        this.tonPayApiClient = tonPayApiClient;
+        this.orderService = orderService;
         this.txTemplate = new TransactionTemplate(transactionManager);
         this.createRequests = meterRegistry.counter("tonwallet.order.create.requests");
         this.createSuccess = meterRegistry.counter("tonwallet.order.create.success");
@@ -135,25 +105,109 @@ public class TonWalletPaymentService {
 
     public TonWalletOrderResponse createOrGetOrder(TonWalletCreateOrderRequest request, String idempotencyKeyHeader) {
         requireTonWalletEnabled();
-        createRequests.increment();
 
-        String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKeyHeader);
-        long orderId = resolveOrCreateOrderId(request, normalizedIdempotencyKey);
-        long paymentId = ensureActivePayment(orderId);
-
-        ReconcileOutcome reconcileOutcome = reconcilePaymentById(paymentId);
-        if (reconcileOutcome.updated()) {
-            paymentMatched.increment();
+        boolean createRequest = request.orderId() == null;
+        TonCheckoutMethod checkoutMethod = createRequest
+                ? resolveCheckoutMethod(request.paymentMethod())
+                : null;
+        String senderAddress = createRequest
+                ? normalizeSenderAddress(request.senderAddress())
+                : null;
+        if (createRequest) {
+            createRequests.increment();
         }
 
-        TonWalletOrderResponse response = txTemplate.execute(status -> buildOrderResponse(orderId));
-        if (response == null) {
-            createFailure.increment();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to build TON payment response");
-        }
+        try {
+            String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKeyHeader);
+            long orderId = orderService.resolveOrCreateOrderId(request, normalizedIdempotencyKey);
+            long paymentId;
+            if (createRequest && checkoutMethod == TonCheckoutMethod.TON_DEV) {
+                requireTonWalletDevAutoPayEnabled();
+                paymentId = ensureActivePayment(orderId, checkoutMethod, senderAddress);
+                autoConfirmDevPayment(paymentId);
+                processPaidOrders();
+            } else if (createRequest) {
+                paymentId = ensureActivePayment(orderId, checkoutMethod, senderAddress);
+                prepareTransferForCheckout(paymentId, checkoutMethod, senderAddress);
+            } else {
+                paymentId = resolveLatestPaymentId(orderId);
+                reconcilePaymentById(paymentId);
+            }
 
-        createSuccess.increment();
-        return response;
+            TonWalletOrderResponse response = txTemplate.execute(status -> buildOrderResponse(paymentId));
+            if (response == null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to build TON payment response");
+            }
+
+            if (createRequest) {
+                createSuccess.increment();
+            }
+            return response;
+        } catch (RuntimeException ex) {
+            if (createRequest) {
+                createFailure.increment();
+            }
+            throw ex;
+        }
+    }
+
+    private long resolveLatestPaymentId(long orderId) {
+        List<PaymentEntity> payments = paymentRepository.findLatestByOrderIdAndProvider(
+                orderId,
+                properties.getProviderName(),
+                PageRequest.of(0, 1)
+        );
+        if (payments.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No TON wallet payment found for order " + orderId);
+        }
+        return payments.get(0).getId();
+    }
+
+    private void autoConfirmDevPayment(long paymentId) {
+        Boolean confirmed = txTemplate.execute(status -> {
+            PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId).orElse(null);
+            if (payment == null) {
+                return false;
+            }
+            if (!Objects.equals(payment.getProvider(), properties.getProviderName())) {
+                return false;
+            }
+            if (TERMINAL_PAYMENT_STATUSES.contains(payment.getStatus())) {
+                return payment.getStatus() == PaymentStatus.succeeded;
+            }
+
+            OrderEntity order = payment.getOrder();
+            if (order == null || TERMINAL_ORDER_STATUSES.contains(order.getStatus())) {
+                return false;
+            }
+
+            OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+            payment.setPaymentMethod(TonCheckoutMethod.TON_DEV.apiValue());
+            payment.setStatus(PaymentStatus.succeeded);
+            payment.setCapturedAt(coalesce(payment.getCapturedAt(), now));
+            payment.setFailureCode(null);
+            payment.setFailureMessage(null);
+            payment.setNextPollAt(null);
+            paymentRepository.save(payment);
+
+            orderService.updateOrderStatusIfNeeded(order, OrderStatus.paid, "ton wallet dev auto-pay confirmed");
+            return true;
+        });
+
+        if (!Boolean.TRUE.equals(confirmed)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "TON DEV payment could not be confirmed");
+        }
+    }
+
+    private void processPaidOrders() {
+        TonWalletFulfillmentResult fulfillmentResult = orderService.fulfillPaidOrders();
+        if (fulfillmentResult.fulfilledCount() > 0) {
+            fulfillmentSuccess.increment(fulfillmentResult.fulfilledCount());
+            log.info("TON wallet fulfillment succeeded for {} paid orders", fulfillmentResult.fulfilledCount());
+        }
+        if (fulfillmentResult.failedCount() > 0) {
+            fulfillmentFailure.increment(fulfillmentResult.failedCount());
+        }
     }
 
     public TonWalletPollResponse pollPendingPayments() {
@@ -180,128 +234,12 @@ public class TonWalletPaymentService {
             }
         }
 
-        int fulfilledOrders = fulfillPaidOrders();
-        if (fulfilledOrders > 0) {
-            log.info("TON wallet fulfillment succeeded for {} paid orders", fulfilledOrders);
-        }
+        processPaidOrders();
 
         return new TonWalletPollResponse(checked, matched, updated);
     }
 
-    private long resolveOrCreateOrderId(TonWalletCreateOrderRequest request, String idempotencyKey) {
-        Long providedOrderId = request.orderId();
-        if (providedOrderId != null) {
-            if (!orderRepository.existsById(providedOrderId)) {
-                throw notFoundOrder(providedOrderId);
-            }
-            return providedOrderId;
-        }
-
-        String normalizedUsername = normalizeUsername(request.username());
-        if (!USERNAME_RE.matcher(normalizedUsername).matches()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "username is required and must match ^[a-z0-9_]{5,32}$ when orderId is not provided"
-            );
-        }
-
-        Integer starsAmount = request.starsAmount();
-        if (starsAmount == null || starsAmount <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "starsAmount must be > 0 when orderId is not provided"
-            );
-        }
-
-        String fulfillmentMethod = resolveFulfillmentMethod(request.fulfillmentMethod());
-        if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod) && !PREMIUM_MONTH_OPTIONS.contains(starsAmount)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "For giftPremium, starsAmount must be one of 3, 6, 12 (premium months)"
-            );
-        }
-
-        BigDecimal totalAmount = expectedTotalAmountUsd(fulfillmentMethod, starsAmount);
-        BigDecimal requestedAmount = request.amount();
-        if (requestedAmount == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "amount is required when orderId is not provided"
-            );
-        }
-
-        BigDecimal normalizedRequestedAmount = requestedAmount.setScale(2, RoundingMode.HALF_UP);
-        if (normalizedRequestedAmount.compareTo(totalAmount) != 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "amount does not match server-side price"
-            );
-        }
-
-        BigDecimal unitPrice = totalAmount.divide(
-                BigDecimal.valueOf(starsAmount),
-                2,
-                RoundingMode.HALF_UP
-        );
-
-        CustomerEntity customer = findOrCreateCustomer(normalizedUsername);
-        if (idempotencyKey != null) {
-            OrderEntity existingOrder = orderRepository.findByCustomerIdAndIdempotencyKey(customer.getId(), idempotencyKey)
-                    .orElse(null);
-            if (existingOrder != null) {
-                return existingOrder.getId();
-            }
-        }
-        if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod)) {
-            telegramUsernameService.assertPremiumGiftAllowed(normalizedUsername);
-        }
-
-        OrderEntity order = new OrderEntity();
-        order.setCustomer(customer);
-        order.setStatus(OrderStatus.created);
-        order.setSource(OrderSource.web);
-        order.setIdempotencyKey(idempotencyKey);
-        order.setStarsAmount(starsAmount);
-        order.setUnitPriceAmount(unitPrice);
-        order.setSubtotalAmount(totalAmount);
-        order.setDiscountAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
-        order.setTotalAmount(totalAmount);
-        order.setCurrency("USD");
-        order.setExternalReference(fulfillmentMethod);
-
-        try {
-            OrderEntity savedOrder = orderRepository.saveAndFlush(order);
-            return savedOrder.getId();
-        } catch (DataIntegrityViolationException ex) {
-            if (idempotencyKey == null) {
-                throw ex;
-            }
-            OrderEntity existingOrder = orderRepository.findByCustomerIdAndIdempotencyKey(customer.getId(), idempotencyKey)
-                    .orElseThrow(() -> ex);
-            return existingOrder.getId();
-        }
-    }
-
-    private CustomerEntity findOrCreateCustomer(String normalizedUsername) {
-        long syntheticTelegramUserId = syntheticTelegramUserId(normalizedUsername);
-
-        CustomerEntity existing = customerRepository.findByTelegramUserId(syntheticTelegramUserId)
-                .orElse(null);
-        if (existing != null) {
-            if (!Objects.equals(existing.getTelegramUsername(), normalizedUsername)) {
-                existing.setTelegramUsername(normalizedUsername);
-                return customerRepository.save(existing);
-            }
-            return existing;
-        }
-
-        CustomerEntity customer = new CustomerEntity();
-        customer.setTelegramUserId(syntheticTelegramUserId);
-        customer.setTelegramUsername(normalizedUsername);
-        return customerRepository.save(customer);
-    }
-
-    private long ensureActivePayment(long orderId) {
+    private long ensureActivePayment(long orderId, TonCheckoutMethod checkoutMethod, String senderAddress) {
         Long paymentId = txTemplate.execute(status -> {
             OrderEntity order = orderRepository.findByIdForUpdate(orderId)
                     .orElseThrow(() -> notFoundOrder(orderId));
@@ -309,17 +247,33 @@ public class TonWalletPaymentService {
             List<PaymentEntity> payments = paymentRepository.findLatestByOrderIdAndProvider(
                     orderId,
                     properties.getProviderName(),
-                    PageRequest.of(0, 1)
+                    PageRequest.of(0, 10)
             );
 
-            if (!payments.isEmpty()) {
-                PaymentEntity existing = payments.get(0);
-                if (!TERMINAL_PAYMENT_STATUSES.contains(existing.getStatus())) {
+            OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+            for (PaymentEntity existing : payments) {
+                if (TERMINAL_PAYMENT_STATUSES.contains(existing.getStatus())) {
+                    continue;
+                }
+
+                if (isPaymentWindowExpired(existing, now)) {
+                    expirePayment(existing, order, "ton wallet payment expired before reuse");
+                    continue;
+                }
+
+                if (matchesCheckoutIntent(existing, checkoutMethod, senderAddress)) {
                     return existing.getId();
                 }
+
                 if (order.getStatus() != OrderStatus.created && order.getStatus() != OrderStatus.pending_payment) {
                     return existing.getId();
                 }
+
+                existing.setStatus(PaymentStatus.cancelled);
+                existing.setFailureCode("payment_replaced");
+                existing.setFailureMessage("Replaced by a new TON wallet payment intent");
+                existing.setNextPollAt(null);
+                paymentRepository.save(existing);
             }
 
             if (order.getStatus() != OrderStatus.created && order.getStatus() != OrderStatus.pending_payment) {
@@ -331,20 +285,27 @@ public class TonWalletPaymentService {
 
             PaymentEntity payment = new PaymentEntity();
             payment.setOrder(order);
-            payment.setProvider(properties.getProviderName());
-            payment.setProviderPaymentId(generatePaymentReference(order.getId()));
-            payment.setPaymentMethod("ton_wallet");
-            payment.setStatus(PaymentStatus.pending);
-            payment.setAmount(order.getTotalAmount());
-            payment.setCurrency(order.getCurrency());
-            payment.setExpiresAt(OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(Math.max(30, properties.getPaymentWindowSeconds())));
-            payment.setFailureCode(null);
-            payment.setFailureMessage(null);
-            PaymentEntity saved = paymentRepository.save(payment);
+                payment.setProvider(properties.getProviderName());
+                payment.setProviderPaymentId(generatePaymentReference(order.getId()));
+                payment.setPaymentMethod(checkoutMethod.apiValue());
+                payment.setStatus(PaymentStatus.pending);
+                payment.setAmount(order.getTotalAmount());
+                payment.setCurrency(order.getCurrency());
+                payment.setRequestPayload(TonWalletPayloads.buildPendingPaymentRequestPayload(
+                        properties.getProviderName(),
+                        checkoutMethod,
+                        senderAddress
+                ));
+                payment.setResponsePayload(null);
+                payment.setExpiresAt(now.plusSeconds(Math.max(30, properties.getPaymentWindowSeconds())));
+                payment.setNextPollAt(initialTonPayCheckAt());
+                payment.setFailureCode(null);
+                payment.setFailureMessage(null);
+                PaymentEntity saved = paymentRepository.save(payment);
 
-            updateOrderStatusIfNeeded(order, OrderStatus.pending_payment, "ton wallet payment created");
-            return saved.getId();
-        });
+                orderService.updateOrderStatusIfNeeded(order, OrderStatus.pending_payment, "ton wallet payment created");
+                return saved.getId();
+            });
 
         if (paymentId == null) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not create TON wallet payment");
@@ -352,41 +313,197 @@ public class TonWalletPaymentService {
         return paymentId;
     }
 
+    private void prepareTransferForCheckout(long paymentId, TonCheckoutMethod checkoutMethod, String senderAddress) {
+        TonTransferPreparationContext context = txTemplate.execute(
+                status -> prepareTransferCreationContext(paymentId, checkoutMethod, senderAddress)
+        );
+        if (context == null || context.alreadyPrepared()) {
+            return;
+        }
+
+        TonPayTransfer transfer;
+        try {
+            transfer = tonPayApiClient.createTransfer(
+                    context.chain(),
+                    context.assetAmount(),
+                    context.assetId(),
+                    context.recipientAddress(),
+                    context.senderAddress(),
+                    context.queryId(),
+                    context.commentToSender(),
+                    context.commentToRecipient()
+            );
+        } catch (TonPayApiException ex) {
+            markTransferPreparationFailure(paymentId, ex);
+            throw mapTonPayCreateError(ex);
+        }
+
+        txTemplate.executeWithoutResult(status -> persistPreparedTransfer(paymentId, context, transfer));
+    }
+
+    private TonTransferPreparationContext prepareTransferCreationContext(long paymentId,
+                                                                        TonCheckoutMethod requestedMethod,
+                                                                        String requestedSenderAddress) {
+        PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId).orElse(null);
+        if (payment == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "TON wallet payment " + paymentId + " not found");
+        }
+        if (!Objects.equals(payment.getProvider(), properties.getProviderName())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment " + paymentId + " does not belong to TON wallet provider");
+        }
+        if (TERMINAL_PAYMENT_STATUSES.contains(payment.getStatus())) {
+            return null;
+        }
+
+        OrderEntity order = payment.getOrder();
+        if (order == null || TERMINAL_ORDER_STATUSES.contains(order.getStatus())) {
+            return null;
+        }
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        if (isPaymentWindowExpired(payment, now)) {
+            expirePayment(payment, order, "ton wallet payment expired before transfer preparation");
+            return null;
+        }
+
+        if (hasPreparedTransfer(payment)) {
+            payment.setNextPollAt(coalesce(payment.getNextPollAt(), initialTonPayCheckAt()));
+            paymentRepository.save(payment);
+            return TonTransferPreparationContext.preparedMarker();
+        }
+
+        TonCheckoutMethod checkoutMethod = requestedMethod != null
+                ? requestedMethod
+                : resolveStoredCheckoutMethod(payment.getPaymentMethod());
+        if (checkoutMethod == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported TON wallet payment method");
+        }
+
+        String senderAddress = requestedSenderAddress;
+        if (senderAddress == null || senderAddress.isBlank()) {
+            senderAddress = extractSenderAddress(payment);
+        }
+        senderAddress = normalizeSenderAddress(senderAddress);
+
+        TonWalletChain chain = checkoutMethod.resolveChain(properties);
+        String recipientAddress = resolveRecipientAddress(chain);
+        String assetId = checkoutMethod.resolveAssetId(properties, chain);
+        String assetTicker = checkoutMethod.assetTicker();
+        BigDecimal assetAmount = resolveAssetAmount(checkoutMethod, order.getTotalAmount());
+        String assetAmountBaseUnits = toBaseUnits(assetAmount, checkoutMethod.assetScale());
+        Long queryId = checkoutMethod.usesJetton() ? generateQueryId(paymentId) : null;
+        OffsetDateTime expiresAt = now.plusSeconds(Math.max(30, properties.getPaymentWindowSeconds()));
+
+        return TonTransferPreparationContext.pending(
+                checkoutMethod,
+                senderAddress,
+                chain,
+                recipientAddress,
+                assetId,
+                assetTicker,
+                assetAmount,
+                assetAmountBaseUnits,
+                queryId,
+                expiresAt,
+                buildSenderComment(order),
+                buildRecipientComment(order)
+        );
+    }
+
+    private void persistPreparedTransfer(long paymentId,
+                                         TonTransferPreparationContext context,
+                                         TonPayTransfer transfer) {
+        PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId).orElse(null);
+        if (payment == null || TERMINAL_PAYMENT_STATUSES.contains(payment.getStatus())) {
+            return;
+        }
+
+        OrderEntity order = payment.getOrder();
+        if (order == null || TERMINAL_ORDER_STATUSES.contains(order.getStatus())) {
+            return;
+        }
+        if (hasPreparedTransfer(payment)) {
+            return;
+        }
+
+        payment.setPaymentMethod(context.checkoutMethod().apiValue());
+        payment.setRequestPayload(TonWalletPayloads.buildPreparedPaymentRequestPayload(context));
+        payment.setResponsePayload(TonWalletPayloads.buildPreparedPaymentResponsePayload(context, transfer));
+        payment.setStatus(PaymentStatus.pending);
+        payment.setExpiresAt(context.expiresAt());
+        payment.setNextPollAt(initialTonPayCheckAt());
+        payment.setFailureCode(null);
+        payment.setFailureMessage(null);
+        payment.setProviderTxHash(null);
+        payment.setCapturedAt(null);
+        paymentRepository.save(payment);
+
+        orderService.updateOrderStatusIfNeeded(order, OrderStatus.pending_payment, "ton wallet transfer prepared");
+    }
+
+    private void markTransferPreparationFailure(long paymentId, TonPayApiException exception) {
+        txTemplate.executeWithoutResult(status -> {
+            PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId).orElse(null);
+            if (payment == null || TERMINAL_PAYMENT_STATUSES.contains(payment.getStatus())) {
+                return;
+            }
+
+            OrderEntity order = payment.getOrder();
+            payment.setStatus(PaymentStatus.failed);
+            payment.setFailureCode("transfer_prepare_failed");
+            payment.setFailureMessage(compactReason(exception == null ? null : exception.getMessage(), 1_000));
+            payment.setNextPollAt(null);
+            paymentRepository.save(payment);
+
+            if (order != null && !TERMINAL_ORDER_STATUSES.contains(order.getStatus())) {
+                orderService.updateOrderStatusIfNeeded(
+                        order,
+                        OrderStatus.failed,
+                        "ton wallet transfer preparation failed: " + compactReason(exception == null ? null : exception.getMessage(), 160)
+                );
+            }
+        });
+    }
+
     private ReconcileOutcome reconcilePaymentById(long paymentId) {
         PaymentCheckContext checkContext = txTemplate.execute(status -> preparePaymentCheck(paymentId));
-        if (checkContext == null) {
+        if (checkContext == null || !checkContext.needsRemoteCheck()) {
             return ReconcileOutcome.notChanged(false);
         }
-        if (!checkContext.needsBlockchainCheck()) {
-            return ReconcileOutcome.updated(false);
-        }
 
-        Optional<TonWalletIncomingTransfer> transfer;
+        Optional<TonPayTransferStatus> transferStatus;
         try {
-            transfer = blockchainClient.findIncomingTransfer(
-                    properties.getRecipientAddress(),
-                    checkContext.expectedAmountNano(),
-                    checkContext.notBefore()
+            transferStatus = tonPayApiClient.findTransfer(
+                    checkContext.chain(),
+                    checkContext.bodyBase64Hash(),
+                    checkContext.tonPayReference()
             );
-        } catch (TonWalletBlockchainException ex) {
+        } catch (TonPayApiException ex) {
+            OffsetDateTime nextPollAt = txTemplate.execute(
+                    status -> scheduleNextPaymentPoll(paymentId, providerFailureRetryAt(ex))
+            );
             log.warn(
-                    "TON blockchain check failed for paymentId={} reference={}: {}",
+                    "TON Pay check failed for paymentId={} reference={}: {}. Payment remains pending and will be retried after {}.",
                     paymentId,
                     checkContext.paymentReference(),
-                    ex.getMessage()
+                    ex.getMessage(),
+                    nextPollAt == null ? "backoff window" : nextPollAt
             );
             return ReconcileOutcome.notChanged(false);
         }
 
-        if (transfer.isEmpty()) {
+        if (transferStatus.isEmpty()) {
+            txTemplate.execute(status -> scheduleNextPaymentPoll(paymentId, nextBlockchainCheckAt()));
             return ReconcileOutcome.notChanged(false);
         }
 
-        Boolean applied = txTemplate.execute(status -> applyMatchedIncomingPayment(paymentId, transfer.get()));
+        Boolean applied = txTemplate.execute(status -> applyCompletedTransferStatus(paymentId, transferStatus.get()));
         if (!Boolean.TRUE.equals(applied)) {
             return ReconcileOutcome.notChanged(false);
         }
-        return ReconcileOutcome.updated(true);
+
+        boolean matched = "success".equalsIgnoreCase(transferStatus.get().status());
+        return ReconcileOutcome.updated(matched);
     }
 
     private PaymentCheckContext preparePaymentCheck(long paymentId) {
@@ -407,36 +524,91 @@ public class TonWalletPaymentService {
         }
 
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        if (payment.getExpiresAt() != null && now.isAfter(payment.getExpiresAt())) {
-            payment.setStatus(PaymentStatus.expired);
-            payment.setFailureCode("invoice_expired");
-            payment.setFailureMessage("TON wallet payment window expired");
-            paymentRepository.save(payment);
-            updateOrderStatusIfNeeded(order, OrderStatus.expired, "ton wallet payment expired");
-            return PaymentCheckContext.expired();
+        if (isPaymentWindowExpired(payment, now)) {
+            expirePayment(payment, order, "ton wallet payment window expired");
+            return PaymentCheckContext.skip();
         }
 
-        BigInteger expectedAmountNano = expectedAmountNano(order, payment.getProviderPaymentId());
-        Instant notBefore = payment.getCreatedAt() == null
-                ? Instant.now().minusSeconds(3_600)
-                : payment.getCreatedAt().toInstant();
+        if (payment.getNextPollAt() != null && payment.getNextPollAt().isAfter(now)) {
+            return PaymentCheckContext.skip();
+        }
 
-        return PaymentCheckContext.forBlockchainCheck(
+        Map<String, Object> responsePayload = payment.getResponsePayload();
+        String tonPayReference = TonWalletPayloads.readString(responsePayload, "tonPayReference");
+        String bodyBase64Hash = TonWalletPayloads.readString(responsePayload, "bodyBase64Hash");
+        if ((tonPayReference == null || tonPayReference.isBlank())
+                && (bodyBase64Hash == null || bodyBase64Hash.isBlank())) {
+            markPaymentMissingTransferMetadata(payment, order);
+            return PaymentCheckContext.skip();
+        }
+
+        TonWalletChain chain = TonWalletChain.fromValue(TonWalletPayloads.readString(responsePayload, "chain"));
+        if (chain == null) {
+            TonCheckoutMethod checkoutMethod = resolveStoredCheckoutMethod(payment.getPaymentMethod());
+            chain = checkoutMethod == null
+                    ? TonWalletChain.resolveDefault(properties.getDefaultChain(), properties.getNetwork())
+                    : checkoutMethod.resolveChain(properties);
+        }
+
+        return PaymentCheckContext.forTonPayCheck(
                 payment.getProviderPaymentId(),
-                expectedAmountNano,
-                notBefore
+                chain,
+                tonPayReference,
+                bodyBase64Hash
         );
     }
 
-    private Boolean applyMatchedIncomingPayment(long paymentId, TonWalletIncomingTransfer transfer) {
+    private void markPaymentMissingTransferMetadata(PaymentEntity payment, OrderEntity order) {
+        payment.setStatus(PaymentStatus.failed);
+        payment.setFailureCode("transfer_metadata_missing");
+        payment.setFailureMessage("TON wallet transfer metadata is missing");
+        payment.setNextPollAt(null);
+        paymentRepository.save(payment);
+        orderService.updateOrderStatusIfNeeded(order, OrderStatus.failed, "ton wallet transfer metadata missing");
+    }
+
+    private OffsetDateTime scheduleNextPaymentPoll(long paymentId, OffsetDateTime nextPollAt) {
+        if (nextPollAt == null) {
+            return null;
+        }
+
         PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId).orElse(null);
         if (payment == null) {
-            return false;
+            return null;
+        }
+        if (!Objects.equals(payment.getProvider(), properties.getProviderName())) {
+            return null;
         }
         if (TERMINAL_PAYMENT_STATUSES.contains(payment.getStatus())) {
-            return false;
+            return null;
         }
-        if (payment.getExpiresAt() != null && OffsetDateTime.now(ZoneOffset.UTC).isAfter(payment.getExpiresAt())) {
+
+        payment.setNextPollAt(nextPollAt);
+        paymentRepository.save(payment);
+        return nextPollAt;
+    }
+
+    private OffsetDateTime initialTonPayCheckAt() {
+        return OffsetDateTime.now(ZoneOffset.UTC)
+                .plus(Duration.ofMillis(Math.max(1_000, properties.getPollDelayMs())));
+    }
+
+    private OffsetDateTime nextBlockchainCheckAt() {
+        return OffsetDateTime.now(ZoneOffset.UTC)
+                .plus(Duration.ofMillis(Math.max(1_000, properties.getBlockchainCheckIntervalMs())));
+    }
+
+    private OffsetDateTime providerFailureRetryAt(TonPayApiException exception) {
+        long delayMs = Math.max(1_000, properties.getBlockchainFailureRetryDelayMs());
+        if (exception != null && exception.getFailureType() == TonPayApiClient.FailureType.RATE_LIMIT) {
+            delayMs = Math.max(delayMs, 60_000L);
+        }
+        return OffsetDateTime.now(ZoneOffset.UTC).plus(Duration.ofMillis(delayMs));
+    }
+
+    private Boolean applyCompletedTransferStatus(long paymentId, TonPayTransferStatus transferStatus) {
+        PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId).orElse(null);
+        if (payment == null || TERMINAL_PAYMENT_STATUSES.contains(payment.getStatus())) {
             return false;
         }
 
@@ -445,361 +617,218 @@ public class TonWalletPaymentService {
             return false;
         }
 
-        String transferTxHash = transfer.txHash() == null ? null : transfer.txHash().trim();
-        if (transferTxHash != null && !transferTxHash.isBlank()) {
-            PaymentEntity duplicateByTxHash = paymentRepository.findByProviderAndProviderTxHash(
+        String txHash = normalizeOptionalText(transferStatus.txHash());
+        if (txHash != null) {
+            PaymentEntity duplicate = paymentRepository.findByProviderAndProviderTxHash(
                     properties.getProviderName(),
-                    transferTxHash
+                    txHash
             ).orElse(null);
-            if (duplicateByTxHash != null && !Objects.equals(duplicateByTxHash.getId(), payment.getId())) {
+            if (duplicate != null && !Objects.equals(duplicate.getId(), payment.getId())) {
                 log.warn(
-                        "Ignoring duplicate TON transfer txHash={} for paymentId={} (already used by paymentId={})",
-                        transferTxHash,
+                        "Ignoring duplicate TON Pay txHash={} for paymentId={} (already used by paymentId={})",
+                        txHash,
                         paymentId,
-                        duplicateByTxHash.getId()
+                        duplicate.getId()
                 );
                 return false;
             }
-            payment.setProviderTxHash(transferTxHash);
         }
 
-        payment.setStatus(PaymentStatus.succeeded);
-        payment.setCapturedAt(OffsetDateTime.now(ZoneOffset.UTC));
-        payment.setFailureCode(null);
-        payment.setFailureMessage(null);
-        try {
-            paymentRepository.save(payment);
-        } catch (DataIntegrityViolationException ex) {
-            log.warn(
-                    "Failed to persist TON payment match for paymentId={} (likely duplicate txHash={}): {}",
-                    paymentId,
-                    transferTxHash,
-                    ex.getMessage()
-            );
-            return false;
+        payment.setResponsePayload(TonWalletPayloads.mergeCompletedTransferPayload(
+                payment.getResponsePayload(),
+                transferStatus,
+                txHash
+        ));
+        payment.setProviderTxHash(txHash);
+        payment.setNextPollAt(null);
+
+        if ("success".equalsIgnoreCase(transferStatus.status())) {
+            payment.setStatus(PaymentStatus.succeeded);
+            payment.setCapturedAt(OffsetDateTime.now(ZoneOffset.UTC));
+            payment.setFailureCode(null);
+            payment.setFailureMessage(null);
+            try {
+                paymentRepository.save(payment);
+            } catch (DataIntegrityViolationException ex) {
+                log.warn(
+                        "Failed to persist TON Pay match for paymentId={} (likely duplicate txHash={}): {}",
+                        paymentId,
+                        txHash,
+                        ex.getMessage()
+                );
+                return false;
+            }
+
+            paymentMatched.increment();
+            orderService.updateOrderStatusIfNeeded(order, OrderStatus.paid, "ton wallet payment confirmed");
+            return true;
         }
 
-        String reason = "ton wallet payment confirmed";
-        if (transferTxHash != null && !transferTxHash.isBlank()) {
-            reason = reason + " txHash=" + compactReason(transferTxHash, 120);
-        }
-        boolean changed = updateOrderStatusIfNeeded(order, OrderStatus.paid, reason);
-        return changed;
+        payment.setStatus(PaymentStatus.failed);
+        payment.setCapturedAt(null);
+        payment.setFailureCode(transferStatus.errorCode() == null
+                ? "tonpay_failed"
+                : "tonpay_failed_" + transferStatus.errorCode());
+        payment.setFailureMessage(compactReason(
+                coalesce(transferStatus.errorMessage(), "TON Pay reported failed transfer"),
+                1_000
+        ));
+        paymentRepository.save(payment);
+        orderService.updateOrderStatusIfNeeded(
+                order,
+                OrderStatus.failed,
+                "ton wallet payment failed: " + compactReason(transferStatus.errorMessage(), 160)
+        );
+        return true;
     }
 
-    private TonWalletOrderResponse buildOrderResponse(long orderId) {
-        OrderEntity order = orderRepository.findById(orderId).orElseThrow(() -> notFoundOrder(orderId));
-        List<PaymentEntity> payments = paymentRepository.findLatestByOrderIdAndProvider(
-                orderId,
-                properties.getProviderName(),
-                PageRequest.of(0, 1)
-        );
-        if (payments.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No TON wallet payment found for order " + orderId);
+    private TonWalletOrderResponse buildOrderResponse(long paymentId) {
+        PaymentEntity payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TON wallet payment " + paymentId + " not found"));
+        if (!Objects.equals(payment.getProvider(), properties.getProviderName())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment " + paymentId + " does not belong to TON wallet provider");
         }
 
-        PaymentEntity payment = payments.get(0);
-        BigInteger expectedNano = expectedAmountNano(order, payment.getProviderPaymentId());
-        String amountTon = formatTonAmount(expectedNano);
-        long validUntil = payment.getExpiresAt() == null
-                ? OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(Math.max(30, properties.getPaymentWindowSeconds())).toEpochSecond()
-                : payment.getExpiresAt().toEpochSecond();
+        OrderEntity order = payment.getOrder();
+        if (order == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order for TON wallet payment " + paymentId + " not found");
+        }
+
+        Map<String, Object> responsePayload = payment.getResponsePayload();
+        TonCheckoutMethod checkoutMethod = resolveStoredCheckoutMethod(payment.getPaymentMethod());
+        TonWalletChain chain = TonWalletChain.fromValue(TonWalletPayloads.readString(responsePayload, "chain"));
+        if (chain == null) {
+            chain = checkoutMethod == null
+                    ? TonWalletChain.resolveDefault(properties.getDefaultChain(), properties.getNetwork())
+                    : checkoutMethod.resolveChain(properties);
+        }
+
+        Long validUntil = TonWalletPayloads.readLong(responsePayload, "validUntil");
+        if (validUntil == null) {
+            validUntil = payment.getExpiresAt() == null ? null : payment.getExpiresAt().toEpochSecond();
+        }
 
         return new TonWalletOrderResponse(
                 order.getId(),
                 payment.getProviderPaymentId(),
                 payment.getStatus().name(),
                 order.getStatus().name(),
-                properties.getRecipientAddress(),
-                amountTon,
-                expectedNano.toString(),
-                validUntil,
-                properties.getNetwork()
+                coalesce(TonWalletPayloads.readString(responsePayload, "paymentMethod"), payment.getPaymentMethod()),
+                TonWalletPayloads.readString(responsePayload, "asset"),
+                TonWalletPayloads.readString(responsePayload, "assetAmount"),
+                TonWalletPayloads.readString(responsePayload, "assetAmountBaseUnits"),
+                TonWalletPayloads.readString(responsePayload, "transferAddress"),
+                TonWalletPayloads.readString(responsePayload, "transferAmount"),
+                TonWalletPayloads.readString(responsePayload, "transferPayload"),
+                TonWalletPayloads.readString(responsePayload, "recipientAddress"),
+                validUntil == null ? 0 : validUntil,
+                chain.tonConnectNetwork()
         );
     }
 
-    private BigInteger expectedAmountNano(OrderEntity order, String paymentReference) {
-        int nonce = parseNonce(paymentReference);
+    private boolean matchesCheckoutIntent(PaymentEntity payment, TonCheckoutMethod checkoutMethod, String senderAddress) {
+        TonCheckoutMethod existingMethod = resolveStoredCheckoutMethod(payment.getPaymentMethod());
+        if (existingMethod == null || existingMethod != checkoutMethod) {
+            return false;
+        }
+        return Objects.equals(extractSenderAddress(payment), senderAddress);
+    }
+
+    private boolean hasPreparedTransfer(PaymentEntity payment) {
+        return TonWalletPayloads.readString(payment.getResponsePayload(), "tonPayReference") != null
+                && TonWalletPayloads.readString(payment.getResponsePayload(), "transferAddress") != null
+                && TonWalletPayloads.readString(payment.getResponsePayload(), "transferAmount") != null;
+    }
+
+    private void expirePayment(PaymentEntity payment, OrderEntity order, String reason) {
+        payment.setStatus(PaymentStatus.expired);
+        payment.setFailureCode("invoice_expired");
+        payment.setFailureMessage("TON wallet payment window expired");
+        payment.setNextPollAt(null);
+        paymentRepository.save(payment);
+        orderService.updateOrderStatusIfNeeded(order, OrderStatus.expired, reason);
+    }
+
+    private boolean isPaymentWindowExpired(PaymentEntity payment, OffsetDateTime now) {
+        return payment.getExpiresAt() != null && now.isAfter(payment.getExpiresAt());
+    }
+
+    private String resolveRecipientAddress(TonWalletChain chain) {
+        String chainSpecific = chain == TonWalletChain.MAINNET
+                ? properties.getMainnetRecipientAddress()
+                : properties.getTestnetRecipientAddress();
+        if (chainSpecific != null && !chainSpecific.isBlank()) {
+            return chainSpecific.trim();
+        }
+
+        String legacy = properties.getRecipientAddress();
+        if (legacy != null && !legacy.isBlank()) {
+            return legacy.trim();
+        }
+
+        throw new ApiProblemException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                PAYMENT_PROVIDER_UNAVAILABLE_CODE,
+                "TON wallet recipient address is not configured for " + chain.apiValue()
+        );
+    }
+
+    private BigDecimal resolveAssetAmount(TonCheckoutMethod checkoutMethod, BigDecimal orderTotalAmountUsd) {
+        if (checkoutMethod.usesJetton()) {
+            return orderTotalAmountUsd.setScale(checkoutMethod.assetScale(), RoundingMode.HALF_UP);
+        }
+
         BigDecimal usdPerTon = properties.getUsdPerTon();
         if (usdPerTon == null || usdPerTon.signum() <= 0) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "tonwallet.usd-per-ton must be > 0");
-        }
-
-        BigDecimal tonAmount = order.getTotalAmount()
-                .divide(usdPerTon, 9, RoundingMode.UP);
-
-        BigInteger baseNano = tonAmount
-                .movePointRight(9)
-                .setScale(0, RoundingMode.UP)
-                .toBigIntegerExact();
-
-        return baseNano.add(BigInteger.valueOf(nonce));
-    }
-
-    private static String formatTonAmount(BigInteger nano) {
-        BigDecimal ton = new BigDecimal(nano).movePointLeft(9).setScale(9, RoundingMode.DOWN).stripTrailingZeros();
-        if (ton.scale() < 0) {
-            ton = ton.setScale(0);
-        }
-        return ton.toPlainString();
-    }
-
-    private String generatePaymentReference(long orderId) {
-        int nonceMax = Math.max(1, properties.getAmountNonceMaxNano());
-        int nonce = secureRandom.nextInt(nonceMax) + 1;
-        return "tw-" + orderId + "-" + nonce;
-    }
-
-    private static int parseNonce(String reference) {
-        if (reference == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "TON payment reference is empty");
-        }
-        java.util.regex.Matcher matcher = PAYMENT_REFERENCE_RE.matcher(reference.trim());
-        if (!matcher.matches()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "TON payment reference format is invalid");
-        }
-        try {
-            int nonce = Integer.parseInt(matcher.group(2));
-            if (nonce <= 0) {
-                throw new NumberFormatException("nonce must be positive");
-            }
-            return nonce;
-        } catch (NumberFormatException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "TON payment reference nonce is invalid");
-        }
-    }
-
-    private int fulfillPaidOrders() {
-        if (!fragmentApiClient.isEnabled()) {
-            return 0;
-        }
-
-        List<Long> paidOrderIds = orderRepository.findIdsByStatus(
-                OrderStatus.paid,
-                PageRequest.of(0, Math.max(1, properties.getPollBatchSize()))
-        );
-        if (paidOrderIds.isEmpty()) {
-            return 0;
-        }
-
-        int fulfilled = 0;
-        for (Long orderId : paidOrderIds) {
-            DeliveryCommand command = txTemplate.execute(status -> startOrderDelivery(orderId));
-            if (command == null) {
-                continue;
-            }
-
-            String idempotencySuffix = FULFILLMENT_GIFT_PREMIUM.equals(command.method())
-                    ? "gift-premium"
-                    : "buy-stars";
-            String idempotencyKey = "order-" + command.orderId() + "-" + idempotencySuffix;
-
-            try {
-                if (FULFILLMENT_GIFT_PREMIUM.equals(command.method())) {
-                    fragmentApiClient.giftPremium(command.recipient(), command.quantity(), idempotencyKey);
-                } else {
-                    fragmentApiClient.buyStars(command.recipient(), command.quantity(), idempotencyKey);
-                }
-            } catch (FragmentApiException ex) {
-                log.warn(
-                        "Fragment {} failed for TON orderId={} recipient={} quantity={}: {}",
-                        command.method(),
-                        command.orderId(),
-                        command.recipient(),
-                        command.quantity(),
-                        ex.getMessage()
-                );
-                Boolean markedFailed = txTemplate.execute(status -> markOrderDeliveryFailed(command.orderId(), ex.getMessage()));
-                if (Boolean.TRUE.equals(markedFailed)) {
-                    fulfillmentFailure.increment();
-                }
-                continue;
-            }
-
-            Boolean markedFulfilled = txTemplate.execute(status -> markOrderFulfilled(command.orderId()));
-            if (Boolean.TRUE.equals(markedFulfilled)) {
-                fulfillmentSuccess.increment();
-                fulfilled++;
-            }
-        }
-
-        return fulfilled;
-    }
-
-    private DeliveryCommand startOrderDelivery(long orderId) {
-        OrderEntity order = orderRepository.findByIdForUpdate(orderId).orElse(null);
-        if (order == null || order.getStatus() != OrderStatus.paid) {
-            return null;
-        }
-
-        CustomerEntity customer = order.getCustomer();
-        String recipient = normalizeUsername(customer == null ? null : customer.getTelegramUsername());
-        Integer quantity = order.getStarsAmount();
-        String method = resolveFulfillmentMethodForOrder(order);
-
-        if (!USERNAME_RE.matcher(recipient).matches() || quantity == null || quantity <= 0) {
-            log.error(
-                    "Cannot build {} delivery payload for TON orderId={} (recipient='{}', quantity={})",
-                    method,
-                    orderId,
-                    recipient,
-                    quantity
+            throw new ApiProblemException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    PAYMENT_PROVIDER_UNAVAILABLE_CODE,
+                    "tonwallet.usd-per-ton must be > 0"
             );
-            boolean markedFailed = updateOrderStatusIfNeeded(
-                    order,
-                    OrderStatus.failed,
-                    "fragment " + method + ": invalid order payload"
+        }
+        return orderTotalAmountUsd.divide(usdPerTon, checkoutMethod.assetScale(), RoundingMode.UP);
+    }
+
+    private String toBaseUnits(BigDecimal amount, int decimals) {
+        return amount.movePointRight(decimals)
+                .setScale(0, RoundingMode.UNNECESSARY)
+                .toBigIntegerExact()
+                .toString();
+    }
+
+    private long generateQueryId(long paymentId) {
+        long value = secureRandom.nextLong();
+        if (value == Long.MIN_VALUE) {
+            value = paymentId == 0 ? 1 : paymentId;
+        }
+        value = Math.abs(value);
+        return value == 0 ? Math.max(1L, paymentId) : value;
+    }
+
+    private ApiProblemException mapTonPayCreateError(TonPayApiException exception) {
+        String detail = compactReason(exception == null ? null : exception.getMessage(), 255);
+        HttpStatus status = HttpStatus.BAD_GATEWAY;
+        if (exception != null && exception.getFailureType() == TonPayApiClient.FailureType.RATE_LIMIT) {
+            status = HttpStatus.TOO_MANY_REQUESTS;
+        } else if (exception != null && exception.getFailureType() == TonPayApiClient.FailureType.UPSTREAM_UNAVAILABLE) {
+            status = HttpStatus.SERVICE_UNAVAILABLE;
+        }
+        return new ApiProblemException(status, PAYMENT_PROVIDER_UNAVAILABLE_CODE, coalesce(detail, "TON Pay is unavailable"));
+    }
+
+    private TonCheckoutMethod resolveCheckoutMethod(String raw) {
+        TonCheckoutMethod checkoutMethod = TonCheckoutMethod.fromApiValue(raw);
+        if (checkoutMethod == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "paymentMethod must be one of 'ton', 'usdt_ton', 'ton_dev', 'ton_wallet'"
             );
-            if (markedFailed) {
-                fulfillmentFailure.increment();
-            }
-            return null;
         }
-        if (FULFILLMENT_GIFT_PREMIUM.equals(method) && !PREMIUM_MONTH_OPTIONS.contains(quantity)) {
-            log.error(
-                    "Cannot build {} delivery payload for TON orderId={} (unsupported months={})",
-                    method,
-                    orderId,
-                    quantity
-            );
-            boolean markedFailed = updateOrderStatusIfNeeded(
-                    order,
-                    OrderStatus.failed,
-                    "fragment " + method + ": invalid premium duration"
-            );
-            if (markedFailed) {
-                fulfillmentFailure.increment();
-            }
-            return null;
-        }
-
-        boolean movedToProcessing = updateOrderStatusIfNeeded(
-                order,
-                OrderStatus.processing,
-                "fragment " + method + ": started"
-        );
-        if (!movedToProcessing) {
-            return null;
-        }
-
-        return new DeliveryCommand(order.getId(), method, recipient, quantity);
+        return checkoutMethod;
     }
 
-    private Boolean markOrderFulfilled(long orderId) {
-        OrderEntity order = orderRepository.findByIdForUpdate(orderId).orElse(null);
-        if (order == null || order.getStatus() != OrderStatus.processing) {
-            return false;
-        }
-        String method = resolveFulfillmentMethodForOrder(order);
-        return updateOrderStatusIfNeeded(order, OrderStatus.fulfilled, "fragment " + method + ": CONFIRMED");
-    }
-
-    private Boolean markOrderDeliveryFailed(long orderId, String failureMessage) {
-        OrderEntity order = orderRepository.findByIdForUpdate(orderId).orElse(null);
-        if (order == null) {
-            return false;
-        }
-        if (order.getStatus() != OrderStatus.processing && order.getStatus() != OrderStatus.paid) {
-            return false;
-        }
-        String method = resolveFulfillmentMethodForOrder(order);
-        return updateOrderStatusIfNeeded(
-                order,
-                OrderStatus.failed,
-                "fragment " + method + " failed: " + compactReason(failureMessage, 160)
-        );
-    }
-
-    private boolean updateOrderStatusIfNeeded(OrderEntity order, OrderStatus targetStatus, String reason) {
-        if (targetStatus == null) {
-            return false;
-        }
-
-        OrderStatus currentStatus = order.getStatus();
-        if (!isOrderTransitionAllowed(currentStatus, targetStatus)) {
-            return false;
-        }
-
-        order.setStatus(targetStatus);
-        switch (targetStatus) {
-            case paid -> order.setPaidAt(coalesce(order.getPaidAt(), OffsetDateTime.now(ZoneOffset.UTC)));
-            case fulfilled -> order.setFulfilledAt(coalesce(order.getFulfilledAt(), OffsetDateTime.now(ZoneOffset.UTC)));
-            case failed -> order.setFailedAt(coalesce(order.getFailedAt(), OffsetDateTime.now(ZoneOffset.UTC)));
-            case cancelled -> order.setCancelledAt(coalesce(order.getCancelledAt(), OffsetDateTime.now(ZoneOffset.UTC)));
-            default -> {
-                // no-op
-            }
-        }
-        orderRepository.save(order);
-
-        OrderStatusHistoryEntity history = new OrderStatusHistoryEntity();
-        history.setOrder(order);
-        history.setOldStatus(currentStatus);
-        history.setNewStatus(targetStatus);
-        history.setChangeReason(compactReason(reason, 255));
-        history.setChangedBy("system");
-        orderStatusHistoryRepository.save(history);
-
-        return true;
-    }
-
-    private boolean isOrderTransitionAllowed(OrderStatus currentStatus, OrderStatus targetStatus) {
-        if (targetStatus == null || Objects.equals(currentStatus, targetStatus)) {
-            return false;
-        }
-        if (TERMINAL_ORDER_STATUSES.contains(currentStatus)) {
-            return false;
-        }
-
-        return switch (targetStatus) {
-            case pending_payment -> currentStatus == OrderStatus.created;
-            case paid -> currentStatus == OrderStatus.created || currentStatus == OrderStatus.pending_payment;
-            case processing -> currentStatus == OrderStatus.paid;
-            case fulfilled -> currentStatus == OrderStatus.paid || currentStatus == OrderStatus.processing;
-            case expired -> currentStatus == OrderStatus.created || currentStatus == OrderStatus.pending_payment;
-            case failed -> currentStatus == OrderStatus.created
-                    || currentStatus == OrderStatus.pending_payment
-                    || currentStatus == OrderStatus.processing
-                    || currentStatus == OrderStatus.paid;
-            case cancelled -> currentStatus == OrderStatus.created || currentStatus == OrderStatus.pending_payment;
-            default -> false;
-        };
-    }
-
-    private static String resolveFulfillmentMethod(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return FULFILLMENT_BUY_STARS;
-        }
-        String normalized = raw.trim();
-        if (FULFILLMENT_BUY_STARS.equals(normalized) || FULFILLMENT_GIFT_PREMIUM.equals(normalized)) {
-            return normalized;
-        }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fulfillmentMethod must be 'buyStars' or 'giftPremium'");
-    }
-
-    private static String resolveFulfillmentMethodForOrder(OrderEntity order) {
-        String externalReference = order.getExternalReference();
-        if (FULFILLMENT_GIFT_PREMIUM.equals(externalReference)) {
-            return FULFILLMENT_GIFT_PREMIUM;
-        }
-        return FULFILLMENT_BUY_STARS;
-    }
-
-    private static BigDecimal expectedTotalAmountUsd(String fulfillmentMethod, int starsAmount) {
-        if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod)) {
-            BigDecimal premiumPrice = PREMIUM_MONTH_PRICES_USD.get(starsAmount);
-            if (premiumPrice == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "For giftPremium, starsAmount must be one of 3, 6, 12 (premium months)"
-                );
-            }
-            return premiumPrice;
-        }
-
-        return BigDecimal.valueOf(starsAmount)
-                .multiply(STARS_UNIT_PRICE_USD)
-                .setScale(2, RoundingMode.HALF_UP);
+    private TonCheckoutMethod resolveStoredCheckoutMethod(String raw) {
+        return TonCheckoutMethod.fromApiValue(raw);
     }
 
     private void requireTonWalletEnabled() {
@@ -809,37 +838,45 @@ public class TonWalletPaymentService {
                     "TON wallet integration is disabled (tonwallet.enabled=false)"
             );
         }
-        if (properties.getRecipientAddress() == null || properties.getRecipientAddress().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "TON wallet recipient address is empty (tonwallet.recipient-address)"
+    }
+
+    private void requireTonWalletDevAutoPayEnabled() {
+        if (!properties.isDevAutoPayEnabled()) {
+            throw new ApiProblemException(
+                    HttpStatus.NOT_FOUND,
+                    "TEST_PAYMENT_DISABLED",
+                    "TON DEV auto-pay is disabled (tonwallet.dev-auto-pay-enabled=false)"
             );
         }
     }
 
-    private static String normalizeUsername(String username) {
-        if (username == null) {
-            return "";
-        }
-        return username.trim().replaceFirst("^@+", "").toLowerCase(Locale.ROOT);
+    private String extractSenderAddress(PaymentEntity payment) {
+        return normalizeOptionalText(TonWalletPayloads.readString(payment.getRequestPayload(), "senderAddress"));
     }
 
-    private static long syntheticTelegramUserId(String normalizedUsername) {
-        byte[] digestBytes;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digestBytes = digest.digest(normalizedUsername.getBytes(StandardCharsets.UTF_8));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 algorithm is not available", e);
-        }
+    private String buildSenderComment(OrderEntity order) {
+        String orderType = FULFILLMENT_GIFT_PREMIUM.equals(order.getExternalReference())
+                ? "Telegram Premium"
+                : "Telegram Stars";
+        return compactReason("QuackStars " + orderType + " order #" + order.getId(), 120);
+    }
 
-        long value = ByteBuffer.wrap(digestBytes).getLong();
-        if (value == Long.MIN_VALUE) {
-            value = Long.MAX_VALUE;
-        }
+    private String buildRecipientComment(OrderEntity order) {
+        return compactReason("Order #" + order.getId(), 64);
+    }
 
-        long negative = -Math.abs(value);
-        return negative == 0 ? -1 : negative;
+    private String normalizeSenderAddress(String senderAddress) {
+        String normalized = normalizeOptionalText(senderAddress);
+        if (normalized == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "senderAddress is required for TON wallet payments");
+        }
+        if (normalized.length() > 128) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "senderAddress is too long (max 128)");
+        }
+        if (normalized.chars().anyMatch(Character::isWhitespace)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "senderAddress must not contain whitespace");
+        }
+        return normalized;
     }
 
     private static String normalizeIdempotencyKey(String raw) {
@@ -854,6 +891,20 @@ public class TonWalletPaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Idempotency-Key is too long (max 128)");
         }
         return normalized;
+    }
+
+    private String generatePaymentReference(long orderId) {
+        int nonceMax = Math.max(1, properties.getAmountNonceMaxNano());
+        int nonce = secureRandom.nextInt(nonceMax) + 1;
+        return "tw-" + orderId + "-" + nonce;
+    }
+
+    private static String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private static <T> T coalesce(T preferred, T fallback) {
@@ -882,28 +933,22 @@ public class TonWalletPaymentService {
     }
 
     private record PaymentCheckContext(
-            boolean needsBlockchainCheck,
+            boolean needsRemoteCheck,
             String paymentReference,
-            BigInteger expectedAmountNano,
-            Instant notBefore
+            TonWalletChain chain,
+            String tonPayReference,
+            String bodyBase64Hash
     ) {
-        static PaymentCheckContext forBlockchainCheck(String paymentReference,
-                                                      BigInteger expectedAmountNano,
-                                                      Instant notBefore) {
-            return new PaymentCheckContext(true, paymentReference, expectedAmountNano, notBefore);
+        static PaymentCheckContext forTonPayCheck(String paymentReference,
+                                                  TonWalletChain chain,
+                                                  String tonPayReference,
+                                                  String bodyBase64Hash) {
+            return new PaymentCheckContext(true, paymentReference, chain, tonPayReference, bodyBase64Hash);
         }
 
-        static PaymentCheckContext expired() {
-            return new PaymentCheckContext(false, null, null, null);
+        static PaymentCheckContext skip() {
+            return new PaymentCheckContext(false, null, null, null, null);
         }
-    }
-
-    private record DeliveryCommand(
-            long orderId,
-            String method,
-            String recipient,
-            int quantity
-    ) {
     }
 
     private record ReconcileOutcome(
@@ -918,4 +963,5 @@ public class TonWalletPaymentService {
             return new ReconcileOutcome(true, matched);
         }
     }
+
 }

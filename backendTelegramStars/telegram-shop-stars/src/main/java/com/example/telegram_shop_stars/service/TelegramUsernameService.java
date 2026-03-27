@@ -104,24 +104,11 @@ public class TelegramUsernameService {
             return cachedPublic;
         }
 
-        UsernameCheckResponse publicResult = lookupViaPublicPage(u);
-        if (publicResult != null) {
-            cachePublicLookup(u, publicResult);
-            return publicResult;
+        UsernameCheckResponse publicCheckResult = resolvePublicCheck(u);
+        if (isPublicLookupCacheable(publicCheckResult)) {
+            cachePublicLookup(u, publicCheckResult);
         }
-
-        if (!tdlib.isEnabledForPublicChecks()) {
-            return new UsernameCheckResponse(
-                    false,
-                    "ERROR",
-                    u,
-                    "Username lookup backend is unavailable",
-                    null,
-                    null
-            );
-        }
-
-        return lookupViaTdlib(u, false);
+        return publicCheckResult;
     }
 
     public void assertPremiumGiftAllowed(String rawUsername) {
@@ -326,6 +313,33 @@ public class TelegramUsernameService {
         }
     }
 
+    private UsernameCheckResponse resolvePublicCheck(String username) {
+        if (tdlib.isEnabledForPublicChecks()) {
+            UsernameCheckResponse tdlibPreferredResult = lookupViaTdlib(username, false);
+            if (isUsableLookupResult(tdlibPreferredResult)) {
+                return tdlibPreferredResult;
+            }
+        }
+
+        UsernameCheckResponse publicResult = lookupViaPublicPage(username);
+        if (publicResult != null) {
+            return publicResult;
+        }
+
+        if (tdlib.isConfigured()) {
+            return lookupViaTdlib(username, false);
+        }
+
+        return new UsernameCheckResponse(
+                false,
+                "ERROR",
+                username,
+                "Username lookup backend is unavailable",
+                null,
+                null
+        );
+    }
+
     private UsernameCheckResponse getCachedPublicLookup(String username) {
         CachedLookup cached = publicLookupCache.get(username);
         if (cached == null) return null;
@@ -401,6 +415,19 @@ public class TelegramUsernameService {
             case "USER", "NOT_FOUND", "BOT", "NOT_A_USER" -> true;
             default -> false;
         };
+    }
+
+    private static boolean isPublicLookupCacheable(UsernameCheckResponse response) {
+        return switch (response.status()) {
+            case "USER", "NOT_FOUND", "BOT", "NOT_A_USER" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isUsableLookupResult(UsernameCheckResponse response) {
+        return response != null
+                && !"ERROR".equals(response.status())
+                && !"PREMIUM_CHECK_UNAVAILABLE".equals(response.status());
     }
 
     static UsernameCheckResponse parsePublicPage(String username, String html) {

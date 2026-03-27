@@ -3,110 +3,114 @@ import { PAGES } from "@/config/pages.config";
 import { withLocalizedAlternates } from "@/i18n/metadata";
 import { getRequestLocale } from "@/i18n/server";
 import type { Locale } from "@/i18n/types";
-import styles from "../legal.module.scss";
+import LegalPage, { type LegalCopy } from "../legal-page";
 
-type Section = {
-  title: string;
-  body?: string;
-  list?: string[];
-};
-
-type RefundsCopy = {
-  metaTitle: string;
-  metaDescription: string;
-  kicker: string;
-  title: string;
-  subtitle: string;
-  updatedAt: string;
-  sections: Section[];
-};
-
-const COPY: Record<Locale, RefundsCopy> = {
+const COPY: Record<Locale, LegalCopy> = {
   en: {
-    metaTitle: "Refunds",
+    metaTitle: "Refund Policy",
     metaDescription:
-      "Refund policy for Telegram Stars purchases and failed deliveries.",
+      "Refund policy for Telegram Stars purchases, unresolved payments, and failed deliveries.",
     kicker: "Legal",
     title: "Refund policy",
     subtitle:
-      "Refunds are evaluated by payment and delivery status. Include your request ID in every support ticket.",
-    updatedAt: "Updated: March 5, 2026",
+      "This policy explains when a refund may be approved, what information support needs, and how review timelines depend on payment and delivery status.",
+    updatedAt: "March 27, 2026",
     sections: [
       {
-        title: "1. Refund eligibility",
+        id: "eligibility",
+        title: "When refunds may be approved",
         list: [
-          "Order failed and Stars were not delivered.",
-          "Payment was captured but status stayed unresolved beyond the support SLA.",
-          "A confirmed technical issue on our side prevented delivery.",
+          "Payment was captured, but Stars were not delivered.",
+          "The order stayed unresolved beyond the normal support review window.",
+          "A confirmed technical issue on our side prevented fulfillment.",
         ],
       },
       {
-        title: "2. Non-refundable cases",
+        id: "not-available",
+        title: "When refunds are usually not available",
         list: [
-          "Successful delivery to the username entered before payment.",
-          "Incorrect recipient entered by the customer.",
-          "Requests that violate abuse and fraud protections.",
+          "Delivery completed to the @username submitted at checkout.",
+          "The customer entered the wrong recipient details.",
+          "The request is linked to abuse, fraud, or payment reversals.",
         ],
       },
       {
-        title: "3. How to request a refund",
+        id: "what-to-include",
+        title: "What to include in a refund request",
         list: [
-          "Contact support with your request ID.",
-          "Attach payment confirmation and approximate payment time.",
-          "Describe the issue in one message to speed up resolution.",
+          "Your request ID.",
+          "Payment confirmation or transaction reference.",
+          "A concise description of what went wrong and when you paid.",
         ],
       },
       {
-        title: "4. Review and timeline",
-        body: "Each request is reviewed manually against payment and delivery logs. Response time depends on payment provider confirmation windows.",
+        id: "review",
+        title: "How review works",
+        body: "Support checks each request against payment, risk, and delivery logs. We may ask for extra details if the payment provider or our records do not clearly explain the order outcome.",
       },
       {
-        title: "5. Final note",
-        body: "To reduce risk, always verify the @username in checkout before submitting payment.",
+        id: "timing",
+        title: "Timing and return path",
+        body: "Review time depends on payment-provider confirmation windows and case complexity. Approved refunds are sent through the original payment route or the return method supported by the provider.",
+      },
+      {
+        id: "before-you-pay",
+        title: "Before you pay",
+        body: "To reduce avoidable disputes, verify the @username and order details before confirming payment.",
       },
     ],
   },
   ru: {
-    metaTitle: "Возвраты",
+    metaTitle: "Политика возвратов",
     metaDescription:
-      "Политика возвратов для покупки звёзд Telegram и неуспешной доставки.",
+      "Политика возвратов для покупки звёзд Telegram, неурегулированных оплат и неуспешной доставки.",
     kicker: "Документы",
     title: "Политика возвратов",
     subtitle:
-      "Возвраты рассматриваются по статусу оплаты и доставки. В каждом обращении указывайте ID запроса.",
-    updatedAt: "Обновлено: 5 марта 2026",
+      "Здесь описано, когда возврат может быть одобрен, какие данные нужны поддержке и почему сроки рассмотрения зависят от статуса оплаты и доставки.",
+    updatedAt: "27 марта 2026",
     sections: [
       {
-        title: "1. Когда возможен возврат",
+        id: "eligibility",
+        title: "Когда возврат может быть одобрен",
         list: [
-          "Заказ завершился ошибкой, и звёзды не были доставлены.",
-          "Оплата прошла, но статус не был урегулирован в заявленный срок обработки.",
-          "Подтверждена техническая проблема на нашей стороне, которая помешала доставке.",
+          "Оплата была успешно списана, но звёзды не были доставлены.",
+          "Заказ оставался неурегулированным дольше обычного окна проверки поддержки.",
+          "Подтверждена техническая проблема на нашей стороне, которая помешала исполнению заказа.",
         ],
       },
       {
-        title: "2. Когда возврат невозможен",
+        id: "not-available",
+        title: "Когда возврат обычно недоступен",
         list: [
-          "Успешная доставка на @username, указанный до оплаты.",
-          "Неверный получатель, введённый пользователем.",
-          "Запросы, нарушающие антифрод-правила и защиту от злоупотреблений.",
+          "Доставка успешно завершена на @username, указанный при оформлении.",
+          "Пользователь ввёл неверные данные получателя.",
+          "Запрос связан со злоупотреблением, мошенничеством или платёжным реверсом.",
         ],
       },
       {
-        title: "3. Как запросить возврат",
+        id: "what-to-include",
+        title: "Что приложить к запросу на возврат",
         list: [
-          "Напишите в поддержку и укажите ID запроса.",
-          "Приложите подтверждение оплаты и примерное время платежа.",
-          "Опишите проблему одним сообщением, чтобы ускорить разбор.",
+          "ID запроса.",
+          "Подтверждение оплаты или идентификатор транзакции.",
+          "Короткое описание проблемы и время, когда был произведён платёж.",
         ],
       },
       {
-        title: "4. Проверка и сроки",
-        body: "Каждый запрос проверяется вручную по платёжным логам и логам доставки. Срок ответа зависит от времени подтверждения у платёжного провайдера.",
+        id: "review",
+        title: "Как проходит проверка",
+        body: "Поддержка сверяет каждый запрос с платёжными, риск-логами и логами доставки. Мы можем запросить дополнительные детали, если у платёжного провайдера или в наших записях недостаточно информации о результате заказа.",
       },
       {
-        title: "5. Важно",
-        body: "Чтобы снизить риск ошибки, всегда проверяйте @username в форме заказа перед оплатой.",
+        id: "timing",
+        title: "Сроки и способ возврата",
+        body: "Срок рассмотрения зависит от окна подтверждения у платёжного провайдера и сложности кейса. Одобренные возвраты отправляются тем же платёжным маршрутом или способом возврата, который поддерживает провайдер.",
+      },
+      {
+        id: "before-you-pay",
+        title: "Перед оплатой",
+        body: "Чтобы снизить количество спорных случаев, проверяйте @username и данные заказа до подтверждения платежа.",
       },
     ],
   },
@@ -129,39 +133,5 @@ export default async function RefundsPage() {
   const locale = await getRequestLocale();
   const copy = COPY[locale];
 
-  return (
-    <main className={styles.legal}>
-      <section className={styles.legal__hero}>
-        <div className={styles.legal__heroBg} aria-hidden="true" />
-        <div className={styles.legal__heroInner}>
-          <p className={styles.legal__kicker}>{copy.kicker}</p>
-          <h1 className={styles.legal__title}>{copy.title}</h1>
-          <p className={styles.legal__subtitle}>{copy.subtitle}</p>
-        </div>
-      </section>
-
-      <section className={styles.legal__content}>
-        <div className={styles.legal__contentInner}>
-          <p className={styles.legal__meta}>{copy.updatedAt}</p>
-          {copy.sections.map((section) => (
-            <article key={section.title} className={styles.legal__section}>
-              <h2 className={styles.legal__sectionTitle}>{section.title}</h2>
-              {section.body ? (
-                <p className={styles.legal__sectionBody}>{section.body}</p>
-              ) : null}
-              {section.list ? (
-                <ul className={styles.legal__list}>
-                  {section.list.map((item) => (
-                    <li key={item} className={styles.legal__listItem}>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return <LegalPage locale={locale} documentKey="refunds" copy={copy} />;
 }

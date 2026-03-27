@@ -1,180 +1,15 @@
+import {
+  ActivityIcon,
+  BarChartIcon,
+  CalendarIcon,
+  DownloadIcon,
+  LayoutDashboardIcon,
+  PieChartIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+} from "@/components/ui/icons";
 import { getDictionary } from "@/i18n/server";
 import styles from "./reportingPreview.module.scss";
-
-function LayoutDashboardIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect width="7" height="9" x="3" y="3" rx="1" />
-      <rect width="7" height="5" x="14" y="3" rx="1" />
-      <rect width="7" height="9" x="14" y="12" rx="1" />
-      <rect width="7" height="5" x="3" y="16" rx="1" />
-    </svg>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" x2="12" y1="15" y2="3" />
-    </svg>
-  );
-}
-
-function ActivityIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
-  );
-}
-
-function SparklesIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M12 3L13.1 8.5 18 10l-4.9 1.5L12 17l-1.1-5.5L6 10l4.9-1.5L12 3z" />
-      <path d="M5 3l.5 2.5L8 6 5.5 6.5 5 9 4.5 6.5 2 6l2.5-.5L5 3z" />
-      <path d="M19 15l.7 3.3L23 19l-3.3.7L19 23l-.7-3.3L15 19l3.3-.7L19 15z" />
-    </svg>
-  );
-}
-
-function PieChartIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M21 12c.552 0 1.005-.449.95-.998A10 10 0 1 0 13 21.95c.55.055.998-.398.998-.95 0-5.523 4.477-10 10.002-10" />
-      <path d="M12 2v10h10" />
-    </svg>
-  );
-}
-
-function ShieldCheckIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
-}
-
-function BarChartIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M3 3v18h18" />
-      <path d="M7 16v-6" />
-      <path d="M12 16V8" />
-      <path d="M17 16v-3" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M8 2v4" />
-      <path d="M16 2v4" />
-      <rect width="18" height="18" x="3" y="4" rx="2" />
-      <path d="M3 10h18" />
-    </svg>
-  );
-}
 
 function TrendChart() {
   return (
@@ -225,7 +60,7 @@ export default async function ReportingPreview() {
             className={styles.reportingPreview__titleIcon}
             aria-hidden="true"
           >
-            <LayoutDashboardIcon />
+            <LayoutDashboardIcon size={20} />
           </span>
           <h2
             className={styles.reportingPreview__title}
@@ -241,7 +76,7 @@ export default async function ReportingPreview() {
           disabled
           aria-disabled="true"
         >
-          <DownloadIcon />
+          <DownloadIcon size={18} />
           <span>{section.exportCsv}</span>
         </button>
       </header>
@@ -263,7 +98,7 @@ export default async function ReportingPreview() {
                   ].join(" ")}
                   aria-hidden="true"
                 >
-                  <ActivityIcon />
+                  <ActivityIcon size={20} />
                 </span>
                 <h3
                   className={styles.reportingPreview__cardTitle}
@@ -279,7 +114,7 @@ export default async function ReportingPreview() {
                   styles["reportingPreview__pill--live"],
                 ].join(" ")}
               >
-                <SparklesIcon />
+                <SparklesIcon size={16} />
                 <span>{section.cards.live}</span>
               </span>
             </header>
@@ -304,7 +139,7 @@ export default async function ReportingPreview() {
                   className={styles.reportingPreview__cardHeaderIcon}
                   aria-hidden="true"
                 >
-                  <PieChartIcon />
+                  <PieChartIcon size={20} />
                 </span>
                 <h3
                   className={styles.reportingPreview__cardTitle}
@@ -320,7 +155,7 @@ export default async function ReportingPreview() {
                   styles["reportingPreview__pill--secure"],
                 ].join(" ")}
               >
-                <ShieldCheckIcon />
+                <ShieldCheckIcon size={16} />
                 <span>{section.cards.secure}</span>
               </span>
             </header>
@@ -382,7 +217,7 @@ export default async function ReportingPreview() {
                 className={styles.reportingPreview__cardHeaderIcon}
                 aria-hidden="true"
               >
-                <BarChartIcon />
+                <BarChartIcon size={20} />
               </span>
               <h3
                 className={styles.reportingPreview__cardTitle}
@@ -398,7 +233,7 @@ export default async function ReportingPreview() {
                 styles["reportingPreview__pill--time"],
               ].join(" ")}
             >
-              <CalendarIcon />
+              <CalendarIcon size={16} />
               <span>{section.cards.last7Days}</span>
             </span>
           </header>

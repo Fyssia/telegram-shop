@@ -10,13 +10,17 @@ import com.example.telegram_shop_stars.entity.OrderStatus;
 import com.example.telegram_shop_stars.entity.OrderStatusHistoryEntity;
 import com.example.telegram_shop_stars.entity.PaymentEntity;
 import com.example.telegram_shop_stars.entity.PaymentStatus;
+import com.example.telegram_shop_stars.error.ApiProblemException;
 import com.example.telegram_shop_stars.repository.CustomerRepository;
 import com.example.telegram_shop_stars.repository.OrderRepository;
 import com.example.telegram_shop_stars.repository.OrderStatusHistoryRepository;
 import com.example.telegram_shop_stars.repository.PaymentRepository;
 import com.example.telegram_shop_stars.service.TelegramUsernameService;
+import com.example.telegram_shop_stars.service.balance.BalanceReservationService;
 import com.example.telegram_shop_stars.service.fragment.FragmentApiClient;
 import com.example.telegram_shop_stars.service.fragment.FragmentApiException;
+import com.example.telegram_shop_stars.service.fragment.FragmentApiProperties;
+import com.example.telegram_shop_stars.service.pricing.OrderPricing;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,11 +34,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -52,9 +56,17 @@ public class CryptoBotPaymentService {
 
     private static final Logger log = LoggerFactory.getLogger(CryptoBotPaymentService.class);
     private static final java.util.regex.Pattern USERNAME_RE = java.util.regex.Pattern.compile("^[a-z0-9_]{5,32}$");
-    private static final String FULFILLMENT_BUY_STARS = "buyStars";
-    private static final String FULFILLMENT_GIFT_PREMIUM = "giftPremium";
-    private static final Set<Integer> PREMIUM_MONTH_OPTIONS = Set.of(3, 6, 12);
+    private static final String PAYMENT_PROVIDER_UNAVAILABLE_CODE = "PAYMENT_PROVIDER_UNAVAILABLE";
+    private static final String PAYMENT_PROVIDER_UNAVAILABLE_DETAIL =
+            "Payment provider is temporarily unavailable. Please try again.";
+    private static final String FULFILLMENT_BUY_STARS = OrderPricing.FULFILLMENT_BUY_STARS;
+    private static final String FULFILLMENT_GIFT_PREMIUM = OrderPricing.FULFILLMENT_GIFT_PREMIUM;
+    private static final String WEB_CHECKOUT_CURRENCY_TYPE = "fiat";
+    private static final String WEB_CHECKOUT_FIAT = "USD";
+    private static final List<OrderStatus> FULFILLMENT_READY_ORDER_STATUSES = List.of(
+            OrderStatus.paid,
+            OrderStatus.processing
+    );
 
     private static final Set<PaymentStatus> POLLABLE_PAYMENT_STATUSES = Set.of(
             PaymentStatus.created,
@@ -84,7 +96,9 @@ public class CryptoBotPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final CryptoBotApiClient apiClient;
+    private final BalanceReservationService balanceReservationService;
     private final FragmentApiClient fragmentApiClient;
+    private final FragmentApiProperties fragmentProperties;
     private final TelegramUsernameService telegramUsernameService;
     private final CryptoBotTestnetProperties properties;
     private final TransactionTemplate txTemplate;
@@ -99,7 +113,9 @@ public class CryptoBotPaymentService {
                                    PaymentRepository paymentRepository,
                                    OrderStatusHistoryRepository orderStatusHistoryRepository,
                                    CryptoBotApiClient apiClient,
+                                   BalanceReservationService balanceReservationService,
                                    FragmentApiClient fragmentApiClient,
+                                   FragmentApiProperties fragmentProperties,
                                    TelegramUsernameService telegramUsernameService,
                                    CryptoBotTestnetProperties properties,
                                    PlatformTransactionManager transactionManager,
@@ -109,7 +125,9 @@ public class CryptoBotPaymentService {
         this.paymentRepository = paymentRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.apiClient = apiClient;
+        this.balanceReservationService = balanceReservationService;
         this.fragmentApiClient = fragmentApiClient;
+        this.fragmentProperties = fragmentProperties;
         this.telegramUsernameService = telegramUsernameService;
         this.properties = properties;
         this.txTemplate = new TransactionTemplate(transactionManager);
@@ -125,23 +143,23 @@ public class CryptoBotPaymentService {
         invoiceCreateRequests.increment();
 
         String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKeyHeader);
-        Map<String, Object> createPayload = buildCreateInvoicePayload(request);
-        long orderId = resolveOrCreateOrderId(request, createPayload, normalizedIdempotencyKey);
+        OrderContext orderContext = resolveOrCreateOrderContext(request, normalizedIdempotencyKey);
+        Map<String, Object> createPayload = buildCreateInvoicePayload(request, orderContext);
 
-        CryptoBotInvoice invoice = tryReuseExistingInvoice(orderId);
+        CryptoBotInvoice invoice = tryReuseExistingInvoice(orderContext.orderId());
         if (invoice == null) {
             try {
                 invoice = apiClient.createInvoice(createPayload);
             } catch (CryptoBotApiException ex) {
                 log.warn(
                         "CryptoBot createInvoice failed for orderId={} payload={}: {}",
-                        orderId,
+                        orderContext.orderId(),
                         createPayload,
                         ex.getMessage(),
                         ex
                 );
                 invoiceCreateFailure.increment();
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment provider is unavailable");
+                throw paymentProviderUnavailable();
             }
         }
 
@@ -155,7 +173,7 @@ public class CryptoBotPaymentService {
             orderStatus = OrderStatus.pending_payment;
         }
 
-        BigDecimal paymentAmount = invoice.amount() == null ? request.amount() : invoice.amount();
+        BigDecimal paymentAmount = invoice.amount() == null ? orderContext.totalAmountUsd() : invoice.amount();
         String currencyForStorage = resolveCurrencyForStorage(invoice);
         OffsetDateTime expiresAt = toOffsetDateTime(invoice.expirationDate());
         OffsetDateTime capturedAt = paymentStatus == PaymentStatus.succeeded
@@ -167,8 +185,8 @@ public class CryptoBotPaymentService {
         OrderStatus persistedOrderStatus = orderStatus;
 
         OrderStatus finalOrderStatus = txTemplate.execute(status -> {
-            OrderEntity order = orderRepository.findByIdForUpdate(orderId)
-                    .orElseThrow(() -> notFoundOrder(orderId));
+            OrderEntity order = orderRepository.findByIdForUpdate(orderContext.orderId())
+                    .orElseThrow(() -> notFoundOrder(orderContext.orderId()));
 
             upsertPayment(
                     order,
@@ -191,7 +209,7 @@ public class CryptoBotPaymentService {
 
         invoiceCreateSuccess.increment();
         return new CryptoBotCreateInvoiceResponse(
-                orderId,
+                orderContext.orderId(),
                 invoice.invoiceId(),
                 invoice.hash(),
                 invoice.normalizedStatus(),
@@ -203,15 +221,14 @@ public class CryptoBotPaymentService {
         );
     }
 
-    private long resolveOrCreateOrderId(CryptoBotCreateInvoiceRequest request,
-                                        Map<String, Object> createPayload,
-                                        String idempotencyKey) {
+    private OrderContext resolveOrCreateOrderContext(CryptoBotCreateInvoiceRequest request, String idempotencyKey) {
         Long providedOrderId = request.orderId();
         if (providedOrderId != null) {
-            if (!orderRepository.existsById(providedOrderId)) {
-                throw notFoundOrder(providedOrderId);
-            }
-            return providedOrderId;
+            OrderEntity order = orderRepository.findById(providedOrderId)
+                    .orElseThrow(() -> notFoundOrder(providedOrderId));
+            validateOrderCanCreateInvoice(order);
+            balanceReservationService.reserveForOrder(order.getId(), order.getTotalAmount());
+            return createOrderContext(order);
         }
 
         String normalizedUsername = normalizeUsername(request.username());
@@ -230,27 +247,37 @@ public class CryptoBotPaymentService {
             );
         }
         String fulfillmentMethod = resolveFulfillmentMethod(request.fulfillmentMethod());
-        if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod) && !PREMIUM_MONTH_OPTIONS.contains(starsAmount)) {
+        OrderPricing.validateQuantity(fulfillmentMethod, starsAmount);
+
+        validateSupportedWebCheckoutCurrency(request);
+
+        BigDecimal requestedAmount = request.amount();
+        if (requestedAmount == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "For giftPremium, starsAmount must be one of 3, 6, 12 (premium months)"
+                    "amount is required when orderId is not provided"
             );
         }
 
-        String currencyCode = resolveOrderCurrencyFromRequest(request, createPayload);
-        BigDecimal totalAmount = request.amount();
-        BigDecimal unitPrice = totalAmount.divide(
-                BigDecimal.valueOf(starsAmount),
-                2,
-                RoundingMode.HALF_UP
-        );
+        BigDecimal totalAmount = OrderPricing.expectedTotalAmountUsd(fulfillmentMethod, starsAmount);
+        BigDecimal normalizedRequestedAmount = OrderPricing.normalizeMoney(requestedAmount);
+        if (normalizedRequestedAmount.compareTo(totalAmount) != 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "amount does not match server-side price"
+            );
+        }
+
+        BigDecimal unitPrice = OrderPricing.resolveUnitPriceAmount(fulfillmentMethod, starsAmount);
 
         CustomerEntity customer = findOrCreateCustomer(normalizedUsername);
         if (idempotencyKey != null) {
             OrderEntity existingOrder = orderRepository.findByCustomerIdAndIdempotencyKey(customer.getId(), idempotencyKey)
                     .orElse(null);
             if (existingOrder != null) {
-                return existingOrder.getId();
+                validateOrderCanCreateInvoice(existingOrder);
+                balanceReservationService.reserveForOrder(existingOrder.getId(), existingOrder.getTotalAmount());
+                return createOrderContext(existingOrder);
             }
         }
         if (FULFILLMENT_GIFT_PREMIUM.equals(fulfillmentMethod)) {
@@ -265,21 +292,24 @@ public class CryptoBotPaymentService {
         order.setStarsAmount(starsAmount);
         order.setUnitPriceAmount(unitPrice);
         order.setSubtotalAmount(totalAmount);
-        order.setDiscountAmount(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        order.setDiscountAmount(OrderPricing.zeroMoney());
         order.setTotalAmount(totalAmount);
-        order.setCurrency(currencyCode);
+        order.setCurrency(WEB_CHECKOUT_FIAT);
         order.setExternalReference(fulfillmentMethod);
 
         try {
             OrderEntity savedOrder = orderRepository.saveAndFlush(order);
-            return savedOrder.getId();
+            balanceReservationService.reserveForOrder(savedOrder.getId(), totalAmount);
+            return createOrderContext(savedOrder);
         } catch (DataIntegrityViolationException ex) {
             if (idempotencyKey == null) {
                 throw ex;
             }
             OrderEntity existingOrder = orderRepository.findByCustomerIdAndIdempotencyKey(customer.getId(), idempotencyKey)
                     .orElseThrow(() -> ex);
-            return existingOrder.getId();
+            validateOrderCanCreateInvoice(existingOrder);
+            balanceReservationService.reserveForOrder(existingOrder.getId(), existingOrder.getTotalAmount());
+            return createOrderContext(existingOrder);
         }
     }
 
@@ -338,6 +368,14 @@ public class CryptoBotPaymentService {
         return "active".equals(status) || "paid".equals(status);
     }
 
+    private static ApiProblemException paymentProviderUnavailable() {
+        return new ApiProblemException(
+                HttpStatus.BAD_GATEWAY,
+                PAYMENT_PROVIDER_UNAVAILABLE_CODE,
+                PAYMENT_PROVIDER_UNAVAILABLE_DETAIL
+        );
+    }
+
     private static String normalizeUsername(String username) {
         if (username == null) {
             return "";
@@ -387,6 +425,7 @@ public class CryptoBotPaymentService {
         if (FULFILLMENT_BUY_STARS.equals(normalized) || FULFILLMENT_GIFT_PREMIUM.equals(normalized)) {
             return normalized;
         }
+
         throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "fulfillmentMethod must be 'buyStars' or 'giftPremium'"
@@ -435,7 +474,7 @@ public class CryptoBotPaymentService {
                     invoices = apiClient.getInvoices(invoiceIds);
                 } catch (CryptoBotApiException ex) {
                     log.warn("CryptoBot getInvoices failed for invoiceIds={}: {}", invoiceIds, ex.getMessage(), ex);
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment provider is unavailable");
+                    throw paymentProviderUnavailable();
                 }
                 invoicesReturned = invoices.size();
                 Map<Long, CryptoBotInvoice> invoicesById = invoices.stream()
@@ -508,8 +547,8 @@ public class CryptoBotPaymentService {
             return 0;
         }
 
-        List<Long> paidOrderIds = orderRepository.findIdsByStatus(
-                OrderStatus.paid,
+        List<Long> paidOrderIds = orderRepository.findIdsReadyForFulfillment(
+                FULFILLMENT_READY_ORDER_STATUSES,
                 PageRequest.of(0, Math.max(1, properties.getPollBatchSize()))
         );
         if (paidOrderIds.isEmpty()) {
@@ -542,8 +581,10 @@ public class CryptoBotPaymentService {
                         command.quantity(),
                         ex.getMessage()
                 );
-                Boolean markedFailed = txTemplate.execute(status -> markOrderDeliveryFailed(command.orderId(), ex.getMessage()));
-                if (Boolean.TRUE.equals(markedFailed)) {
+                DeliveryFailureOutcome failureOutcome = txTemplate.execute(
+                        status -> scheduleOrderDeliveryRetryOrFail(command.orderId(), ex.getMessage())
+                );
+                if (failureOutcome != null && failureOutcome.terminalFailure()) {
                     fulfillmentFailure.increment();
                 }
                 continue;
@@ -561,7 +602,18 @@ public class CryptoBotPaymentService {
 
     private DeliveryCommand startOrderDelivery(long orderId) {
         OrderEntity order = orderRepository.findByIdForUpdate(orderId).orElse(null);
-        if (order == null || order.getStatus() != OrderStatus.paid) {
+        if (order == null) {
+            return null;
+        }
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        if (order.getStatus() == OrderStatus.processing) {
+            OffsetDateTime leaseUntil = order.getNextFulfillmentAttemptAt();
+            if (leaseUntil != null && leaseUntil.isAfter(now)) {
+                return null;
+            }
+            log.warn("Reclaiming expired Fragment delivery lease for orderId={}", orderId);
+        } else if (order.getStatus() != OrderStatus.paid) {
             return null;
         }
 
@@ -588,17 +640,21 @@ public class CryptoBotPaymentService {
             }
             return null;
         }
-        if (FULFILLMENT_GIFT_PREMIUM.equals(method) && !PREMIUM_MONTH_OPTIONS.contains(quantity)) {
+
+        try {
+            OrderPricing.validateQuantity(method, quantity);
+        } catch (ResponseStatusException ex) {
             log.error(
-                    "Cannot build {} delivery payload for orderId={} (unsupported months={})",
+                    "Cannot build {} delivery payload for orderId={} (invalid quantity={}): {}",
                     method,
                     orderId,
-                    quantity
+                    quantity,
+                    ex.getReason()
             );
             boolean markedFailed = updateOrderStatusIfNeeded(
                     order,
                     OrderStatus.failed,
-                    "fragment " + method + ": invalid premium duration"
+                    "fragment " + method + ": invalid quantity"
             );
             if (markedFailed) {
                 fulfillmentFailure.increment();
@@ -606,14 +662,19 @@ public class CryptoBotPaymentService {
             return null;
         }
 
-        boolean movedToProcessing = updateOrderStatusIfNeeded(
-                order,
-                OrderStatus.processing,
-                "fragment " + method + ": started"
-        );
-        if (!movedToProcessing) {
-            return null;
+        if (order.getStatus() == OrderStatus.paid) {
+            boolean movedToProcessing = updateOrderStatusIfNeeded(
+                    order,
+                    OrderStatus.processing,
+                    "fragment " + method + ": started"
+            );
+            if (!movedToProcessing) {
+                return null;
+            }
         }
+
+        order.setNextFulfillmentAttemptAt(now.plus(Duration.ofMillis(resolveDeliveryLeaseMs())));
+        orderRepository.save(order);
 
         return new DeliveryCommand(order.getId(), method, recipient, quantity);
     }
@@ -643,6 +704,55 @@ public class CryptoBotPaymentService {
                 OrderStatus.failed,
                 "fragment " + method + " failed: " + compactReason(failureMessage, 160)
         );
+    }
+
+    private DeliveryFailureOutcome scheduleOrderDeliveryRetryOrFail(long orderId, String failureMessage) {
+        OrderEntity order = orderRepository.findByIdForUpdate(orderId).orElse(null);
+        if (order == null) {
+            return DeliveryFailureOutcome.ignored();
+        }
+        if (order.getStatus() != OrderStatus.processing && order.getStatus() != OrderStatus.paid) {
+            return DeliveryFailureOutcome.ignored();
+        }
+
+        String method = resolveFulfillmentMethodForOrder(order);
+        int nextAttempt = Math.max(0, coalesce(order.getFulfillmentAttempts(), 0)) + 1;
+        order.setFulfillmentAttempts(nextAttempt);
+
+        if (nextAttempt >= Math.max(1, fragmentProperties.getDeliveryMaxAttempts())) {
+            order.setNextFulfillmentAttemptAt(null);
+            boolean markedFailed = updateOrderStatusIfNeeded(
+                    order,
+                    OrderStatus.failed,
+                    "fragment " + method + " exhausted after " + nextAttempt + " attempts: "
+                            + compactReason(failureMessage, 160)
+            );
+            return markedFailed
+                    ? DeliveryFailureOutcome.terminalFailure(nextAttempt)
+                    : DeliveryFailureOutcome.ignored();
+        }
+
+        OffsetDateTime retryAt = nextDeliveryRetryAt(nextAttempt);
+        order.setNextFulfillmentAttemptAt(retryAt);
+        boolean movedBackToPaid = updateOrderStatusIfNeeded(
+                order,
+                OrderStatus.paid,
+                "fragment " + method + " retry " + nextAttempt + " scheduled: "
+                        + compactReason(failureMessage, 160)
+        );
+        if (!movedBackToPaid && order.getStatus() != OrderStatus.paid) {
+            return DeliveryFailureOutcome.ignored();
+        }
+
+        orderRepository.save(order);
+        log.warn(
+                "Scheduled Fragment retry for orderId={} at {} after attempt {}: {}",
+                orderId,
+                retryAt,
+                nextAttempt,
+                compactReason(failureMessage, 255)
+        );
+        return DeliveryFailureOutcome.retryScheduled(retryAt, nextAttempt);
     }
 
     private void upsertPayment(OrderEntity order,
@@ -736,30 +846,21 @@ public class CryptoBotPaymentService {
         history.setChangeReason(compactReason(reason, 255));
         history.setChangedBy("system");
         orderStatusHistoryRepository.save(history);
+        balanceReservationService.applyReservationSideEffects(order, currentStatus, targetStatus);
 
         return true;
     }
 
-    private Map<String, Object> buildCreateInvoicePayload(CryptoBotCreateInvoiceRequest request) {
-        String currencyType = request.currencyType().trim().toLowerCase(Locale.ROOT);
-        if (!"fiat".equals(currencyType) && !"crypto".equals(currencyType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "currencyType must be 'fiat' or 'crypto'");
-        }
+    private Map<String, Object> buildCreateInvoicePayload(CryptoBotCreateInvoiceRequest request, OrderContext orderContext) {
+        validateSupportedWebCheckoutCurrency(request);
 
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("currency_type", currencyType);
-        payload.put("amount", request.amount().stripTrailingZeros().toPlainString());
+        payload.put("currency_type", WEB_CHECKOUT_CURRENCY_TYPE);
+        payload.put("amount", orderContext.totalAmountUsd().stripTrailingZeros().toPlainString());
+        payload.put("fiat", orderContext.currencyCode());
 
-        if ("fiat".equals(currencyType)) {
-            String fiat = normalizeRequiredCurrency(request.fiat(), "fiat is required for currencyType=fiat");
-            payload.put("fiat", fiat);
-
-            if (request.acceptedAssets() != null && !request.acceptedAssets().isBlank()) {
-                payload.put("accepted_assets", request.acceptedAssets().trim().toUpperCase(Locale.ROOT));
-            }
-        } else {
-            String asset = normalizeRequiredCurrency(request.asset(), "asset is required for currencyType=crypto");
-            payload.put("asset", asset);
+        if (request.acceptedAssets() != null && !request.acceptedAssets().isBlank()) {
+            payload.put("accepted_assets", request.acceptedAssets().trim().toUpperCase(Locale.ROOT));
         }
 
         if (request.description() != null && !request.description().isBlank()) {
@@ -782,28 +883,57 @@ public class CryptoBotPaymentService {
         return value.trim().toUpperCase(Locale.ROOT);
     }
 
-    private static String resolveOrderCurrencyFromRequest(CryptoBotCreateInvoiceRequest request,
-                                                          Map<String, Object> createPayload) {
-        String currencyType = request.currencyType().trim().toLowerCase(Locale.ROOT);
-        String currency;
-        if ("fiat".equals(currencyType)) {
-            Object fiat = createPayload.get("fiat");
-            currency = fiat instanceof String ? ((String) fiat).trim().toUpperCase(Locale.ROOT) : "";
-        } else {
-            Object asset = createPayload.get("asset");
-            currency = asset instanceof String ? ((String) asset).trim().toUpperCase(Locale.ROOT) : "";
-        }
-
-        if (currency.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot resolve order currency from request");
-        }
-        if (currency.length() > 3) {
+    private static void validateSupportedWebCheckoutCurrency(CryptoBotCreateInvoiceRequest request) {
+        String currencyType = request.currencyType() == null
+                ? ""
+                : request.currencyType().trim().toLowerCase(Locale.ROOT);
+        if (!WEB_CHECKOUT_CURRENCY_TYPE.equals(currencyType)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Currency '" + currency + "' does not fit orders.currency CHAR(3). Use fiat currency like RUB/USD."
+                    "Only fiat CryptoBot invoices are supported"
             );
         }
-        return currency;
+
+        String fiat = normalizeRequiredCurrency(request.fiat(), "fiat is required for currencyType=fiat");
+        if (!WEB_CHECKOUT_FIAT.equals(fiat)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only USD fiat CryptoBot invoices are supported"
+            );
+        }
+    }
+
+    private static void validateOrderCanCreateInvoice(OrderEntity order) {
+        if (order.getStatus() != OrderStatus.created && order.getStatus() != OrderStatus.pending_payment) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Order " + order.getId() + " cannot create a new CryptoBot invoice in status " + order.getStatus().name()
+            );
+        }
+    }
+
+    private static OrderContext createOrderContext(OrderEntity order) {
+        BigDecimal totalAmount = order.getTotalAmount();
+        if (totalAmount == null) {
+            throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Order " + order.getId() + " has no total amount"
+            );
+        }
+
+        String currencyCode = order.getCurrency();
+        if (currencyCode == null || currencyCode.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Order " + order.getId() + " has no currency"
+            );
+        }
+
+        return new OrderContext(
+                order.getId(),
+                OrderPricing.normalizeMoney(totalAmount),
+                currencyCode.trim().toUpperCase(Locale.ROOT)
+        );
     }
 
     private String resolveCurrencyForStorage(CryptoBotInvoice invoice) {
@@ -832,7 +962,8 @@ public class CryptoBotPaymentService {
         return switch (targetStatus) {
             case pending_payment -> currentStatus == OrderStatus.created;
             case paid -> currentStatus == OrderStatus.created
-                    || currentStatus == OrderStatus.pending_payment;
+                    || currentStatus == OrderStatus.pending_payment
+                    || currentStatus == OrderStatus.processing;
             case processing -> currentStatus == OrderStatus.paid;
             case fulfilled -> currentStatus == OrderStatus.paid
                     || currentStatus == OrderStatus.processing;
@@ -840,11 +971,26 @@ public class CryptoBotPaymentService {
                     || currentStatus == OrderStatus.pending_payment;
             case failed -> currentStatus == OrderStatus.created
                     || currentStatus == OrderStatus.pending_payment
-                    || currentStatus == OrderStatus.processing;
+                    || currentStatus == OrderStatus.processing
+                    || currentStatus == OrderStatus.paid;
             case cancelled -> currentStatus == OrderStatus.created
                     || currentStatus == OrderStatus.pending_payment;
             default -> false;
         };
+    }
+
+    private OffsetDateTime nextDeliveryRetryAt(int attemptNumber) {
+        long baseDelayMs = Math.max(1, fragmentProperties.getDeliveryRetryDelayMs());
+        long maxDelayMs = Math.max(baseDelayMs, fragmentProperties.getDeliveryMaxRetryDelayMs());
+        long multiplier = 1L << Math.min(16, Math.max(0, attemptNumber - 1));
+        long delayMs = Math.min(maxDelayMs, baseDelayMs * multiplier);
+        return OffsetDateTime.now(ZoneOffset.UTC).plusNanos(delayMs * 1_000_000L);
+    }
+
+    private long resolveDeliveryLeaseMs() {
+        long configuredLeaseMs = Math.max(1L, fragmentProperties.getDeliveryLeaseMs());
+        long minimumSafeLeaseMs = Math.max(30_000L, (long) fragmentProperties.getReadTimeoutMs() + 30_000L);
+        return Math.max(configuredLeaseMs, minimumSafeLeaseMs);
     }
 
     private static PaymentStatus mapPaymentStatus(String invoiceStatus) {
@@ -936,6 +1082,31 @@ public class CryptoBotPaymentService {
             long paymentId,
             long invoiceId
     ) {
+    }
+
+    private record OrderContext(
+            long orderId,
+            BigDecimal totalAmountUsd,
+            String currencyCode
+    ) {
+    }
+
+    private record DeliveryFailureOutcome(
+            boolean terminalFailure,
+            OffsetDateTime retryAt,
+            int attemptNumber
+    ) {
+        private static DeliveryFailureOutcome ignored() {
+            return new DeliveryFailureOutcome(false, null, 0);
+        }
+
+        private static DeliveryFailureOutcome retryScheduled(OffsetDateTime retryAt, int attemptNumber) {
+            return new DeliveryFailureOutcome(false, retryAt, attemptNumber);
+        }
+
+        private static DeliveryFailureOutcome terminalFailure(int attemptNumber) {
+            return new DeliveryFailureOutcome(true, null, attemptNumber);
+        }
     }
 
     private record DeliveryCommand(

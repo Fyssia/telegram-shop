@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -22,6 +23,8 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "orders")
 public class OrderEntity {
+
+    private static final BigDecimal ZERO_MONEY = new BigDecimal("0.000");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,16 +54,16 @@ public class OrderEntity {
     @Column(name = "stars_amount", nullable = false)
     private Integer starsAmount;
 
-    @Column(name = "unit_price_amount", nullable = false, precision = 14, scale = 2)
+    @Column(name = "unit_price_amount", nullable = false, precision = 14, scale = 4)
     private BigDecimal unitPriceAmount;
 
-    @Column(name = "subtotal_amount", nullable = false, precision = 14, scale = 2)
+    @Column(name = "subtotal_amount", nullable = false, precision = 14, scale = 3)
     private BigDecimal subtotalAmount;
 
-    @Column(name = "discount_amount", nullable = false, precision = 14, scale = 2)
+    @Column(name = "discount_amount", nullable = false, precision = 14, scale = 3)
     private BigDecimal discountAmount;
 
-    @Column(name = "total_amount", nullable = false, precision = 14, scale = 2)
+    @Column(name = "total_amount", nullable = false, precision = 14, scale = 3)
     private BigDecimal totalAmount;
 
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -87,6 +90,41 @@ public class OrderEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "balance_reservation_status", nullable = false, length = 16)
+    private BalanceReservationStatus balanceReservationStatus = BalanceReservationStatus.none;
+
+    @Column(name = "balance_reserved_amount", nullable = false, precision = 14, scale = 3)
+    private BigDecimal balanceReservedAmount = ZERO_MONEY;
+
+    @Column(name = "balance_reserved_at")
+    private OffsetDateTime balanceReservedAt;
+
+    @Column(name = "balance_released_at")
+    private OffsetDateTime balanceReleasedAt;
+
+    @Column(name = "balance_consumed_at")
+    private OffsetDateTime balanceConsumedAt;
+
+    @Column(name = "fulfillment_attempts", nullable = false)
+    private Integer fulfillmentAttempts = 0;
+
+    @PrePersist
+    void applyDefaults() {
+        if (balanceReservationStatus == null) {
+            balanceReservationStatus = BalanceReservationStatus.none;
+        }
+        if (balanceReservedAmount == null) {
+            balanceReservedAmount = ZERO_MONEY;
+        }
+        if (fulfillmentAttempts == null) {
+            fulfillmentAttempts = 0;
+        }
+    }
+
+    @Column(name = "next_fulfillment_attempt_at")
+    private OffsetDateTime nextFulfillmentAttemptAt;
 
     public Long getId() {
         return id;
@@ -210,5 +248,61 @@ public class OrderEntity {
 
     public void setCancelledAt(OffsetDateTime cancelledAt) {
         this.cancelledAt = cancelledAt;
+    }
+
+    public BalanceReservationStatus getBalanceReservationStatus() {
+        return balanceReservationStatus;
+    }
+
+    public void setBalanceReservationStatus(BalanceReservationStatus balanceReservationStatus) {
+        this.balanceReservationStatus = balanceReservationStatus;
+    }
+
+    public BigDecimal getBalanceReservedAmount() {
+        return balanceReservedAmount;
+    }
+
+    public void setBalanceReservedAmount(BigDecimal balanceReservedAmount) {
+        this.balanceReservedAmount = balanceReservedAmount;
+    }
+
+    public OffsetDateTime getBalanceReservedAt() {
+        return balanceReservedAt;
+    }
+
+    public void setBalanceReservedAt(OffsetDateTime balanceReservedAt) {
+        this.balanceReservedAt = balanceReservedAt;
+    }
+
+    public OffsetDateTime getBalanceReleasedAt() {
+        return balanceReleasedAt;
+    }
+
+    public void setBalanceReleasedAt(OffsetDateTime balanceReleasedAt) {
+        this.balanceReleasedAt = balanceReleasedAt;
+    }
+
+    public OffsetDateTime getBalanceConsumedAt() {
+        return balanceConsumedAt;
+    }
+
+    public void setBalanceConsumedAt(OffsetDateTime balanceConsumedAt) {
+        this.balanceConsumedAt = balanceConsumedAt;
+    }
+
+    public Integer getFulfillmentAttempts() {
+        return fulfillmentAttempts;
+    }
+
+    public void setFulfillmentAttempts(Integer fulfillmentAttempts) {
+        this.fulfillmentAttempts = fulfillmentAttempts;
+    }
+
+    public OffsetDateTime getNextFulfillmentAttemptAt() {
+        return nextFulfillmentAttemptAt;
+    }
+
+    public void setNextFulfillmentAttemptAt(OffsetDateTime nextFulfillmentAttemptAt) {
+        this.nextFulfillmentAttemptAt = nextFulfillmentAttemptAt;
     }
 }

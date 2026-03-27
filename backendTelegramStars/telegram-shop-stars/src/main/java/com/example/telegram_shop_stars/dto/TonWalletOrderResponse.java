@@ -5,9 +5,14 @@ public record TonWalletOrderResponse(
         String paymentReference,
         String paymentStatus,
         String orderStatus,
+        String paymentMethod,
+        String asset,
+        String assetAmount,
+        String assetAmountBaseUnits,
+        String transferAddress,
+        String transferAmount,
+        String transferPayload,
         String recipientAddress,
-        String amountTon,
-        String amountNano,
         long validUntil,
         String network
 ) {

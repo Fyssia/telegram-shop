@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { API_NO_STORE_CACHE_CONTROL } from "@/config/cache-control";
+import { getFragmentApiBaseUrl } from "@/config/runtime-env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
 
-const FRAGMENT_LOCAL_API_URL =
-  process.env.FRAGMENT_LOCAL_API_URL ?? "http://127.0.0.1:8080/api";
+const FRAGMENT_LOCAL_API_URL = getFragmentApiBaseUrl();
 const UPSTREAM_TIMEOUT_MS = 180_000;
 const USERNAME_RE = /^[a-z0-9_]{5,32}$/;
 const PREMIUM_GIFT_MONTHS = new Set([3, 6, 12]);
@@ -47,6 +48,16 @@ type ErrorResponseExtra = {
   idempotencyKey?: string;
   upstreamHttpStatus?: number;
 };
+
+function jsonNoStore(body: unknown, init?: ResponseInit) {
+  const headers = new Headers(init?.headers);
+  headers.set("Cache-Control", API_NO_STORE_CACHE_CONTROL);
+
+  return NextResponse.json(body, {
+    ...init,
+    headers,
+  });
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -123,7 +134,7 @@ function jsonError(
   error: string,
   extra: ErrorResponseExtra,
 ) {
-  return NextResponse.json(
+  return jsonNoStore(
     {
       ok: false,
       code,
@@ -232,7 +243,7 @@ export async function POST(request: Request) {
   if (idempotencyKey) {
     const cached = getCompletedIdempotencyResponse(idempotencyKey);
     if (cached) {
-      return NextResponse.json(cached.payload, { status: cached.statusCode });
+      return jsonNoStore(cached.payload, { status: cached.statusCode });
     }
   }
 
@@ -301,7 +312,7 @@ export async function POST(request: Request) {
       if (idempotencyKey) {
         setCompletedIdempotencyResponse(idempotencyKey, 200, payload);
       }
-      return NextResponse.json(payload, { status: 200 });
+      return jsonNoStore(payload, { status: 200 });
     }
 
     if (upstreamStatus === "FAILED") {
@@ -326,7 +337,7 @@ export async function POST(request: Request) {
       if (idempotencyKey) {
         setCompletedIdempotencyResponse(idempotencyKey, statusCode, payload);
       }
-      return NextResponse.json(payload, { status: statusCode });
+      return jsonNoStore(payload, { status: statusCode });
     }
 
     const upstreamContextParts = [`HTTP ${upstreamResponse.status}`];

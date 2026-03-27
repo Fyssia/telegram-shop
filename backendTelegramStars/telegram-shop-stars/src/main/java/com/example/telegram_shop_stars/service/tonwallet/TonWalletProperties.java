@@ -11,16 +11,24 @@ public class TonWalletProperties {
     private String providerName = "ton_wallet";
     private String recipientAddress = "";
     private String network = "-239";
+    private String defaultChain = "";
+    private String mainnetRecipientAddress = "";
+    private String testnetRecipientAddress = "";
+    private String usdtMainnetMasterAddress = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+    private String usdtTestnetMasterAddress = "";
+    private String tonPayMainnetBaseUrl = "https://pay.ton.org";
+    private String tonPayTestnetBaseUrl = "https://dev.pay.ton.org";
+    private String tonPayApiKey = "";
     private BigDecimal usdPerTon = new BigDecimal("3.00");
     private int paymentWindowSeconds = 900;
     private int amountNonceMaxNano = 999_999;
     private int pollDelayMs = 5_000;
     private int pollBatchSize = 100;
-    private String toncenterBaseUrl = "https://toncenter.com/api/v2";
-    private String toncenterApiKey = "";
-    private int toncenterTxLimit = 50;
     private int connectTimeoutMs = 5_000;
     private int readTimeoutMs = 10_000;
+    private int blockchainCheckIntervalMs = 15_000;
+    private int blockchainFailureRetryDelayMs = 60_000;
+    private boolean devAutoPayEnabled = false;
 
     public boolean isEnabled() {
         return enabled;
@@ -52,6 +60,70 @@ public class TonWalletProperties {
 
     public void setNetwork(String network) {
         this.network = network;
+    }
+
+    public String getDefaultChain() {
+        return defaultChain;
+    }
+
+    public void setDefaultChain(String defaultChain) {
+        this.defaultChain = defaultChain;
+    }
+
+    public String getMainnetRecipientAddress() {
+        return mainnetRecipientAddress;
+    }
+
+    public void setMainnetRecipientAddress(String mainnetRecipientAddress) {
+        this.mainnetRecipientAddress = mainnetRecipientAddress;
+    }
+
+    public String getTestnetRecipientAddress() {
+        return testnetRecipientAddress;
+    }
+
+    public void setTestnetRecipientAddress(String testnetRecipientAddress) {
+        this.testnetRecipientAddress = testnetRecipientAddress;
+    }
+
+    public String getUsdtMainnetMasterAddress() {
+        return usdtMainnetMasterAddress;
+    }
+
+    public void setUsdtMainnetMasterAddress(String usdtMainnetMasterAddress) {
+        this.usdtMainnetMasterAddress = usdtMainnetMasterAddress;
+    }
+
+    public String getUsdtTestnetMasterAddress() {
+        return usdtTestnetMasterAddress;
+    }
+
+    public void setUsdtTestnetMasterAddress(String usdtTestnetMasterAddress) {
+        this.usdtTestnetMasterAddress = usdtTestnetMasterAddress;
+    }
+
+    public String getTonPayMainnetBaseUrl() {
+        return tonPayMainnetBaseUrl;
+    }
+
+    public void setTonPayMainnetBaseUrl(String tonPayMainnetBaseUrl) {
+        this.tonPayMainnetBaseUrl = tonPayMainnetBaseUrl;
+    }
+
+    public String getTonPayTestnetBaseUrl() {
+        return tonPayTestnetBaseUrl;
+    }
+
+    public void setTonPayTestnetBaseUrl(String tonPayTestnetBaseUrl) {
+        this.tonPayTestnetBaseUrl = tonPayTestnetBaseUrl;
+    }
+
+    public String getTonPayApiKey() {
+        return tonPayApiKey;
+    }
+
+    public void setTonPayApiKey(String tonPayApiKey) {
+        this.tonPayApiKey = tonPayApiKey;
     }
 
     public BigDecimal getUsdPerTon() {
@@ -94,30 +166,6 @@ public class TonWalletProperties {
         this.pollBatchSize = pollBatchSize;
     }
 
-    public String getToncenterBaseUrl() {
-        return toncenterBaseUrl;
-    }
-
-    public void setToncenterBaseUrl(String toncenterBaseUrl) {
-        this.toncenterBaseUrl = toncenterBaseUrl;
-    }
-
-    public String getToncenterApiKey() {
-        return toncenterApiKey;
-    }
-
-    public void setToncenterApiKey(String toncenterApiKey) {
-        this.toncenterApiKey = toncenterApiKey;
-    }
-
-    public int getToncenterTxLimit() {
-        return toncenterTxLimit;
-    }
-
-    public void setToncenterTxLimit(int toncenterTxLimit) {
-        this.toncenterTxLimit = toncenterTxLimit;
-    }
-
     public int getConnectTimeoutMs() {
         return connectTimeoutMs;
     }
@@ -132,5 +180,29 @@ public class TonWalletProperties {
 
     public void setReadTimeoutMs(int readTimeoutMs) {
         this.readTimeoutMs = readTimeoutMs;
+    }
+
+    public int getBlockchainCheckIntervalMs() {
+        return blockchainCheckIntervalMs;
+    }
+
+    public void setBlockchainCheckIntervalMs(int blockchainCheckIntervalMs) {
+        this.blockchainCheckIntervalMs = blockchainCheckIntervalMs;
+    }
+
+    public int getBlockchainFailureRetryDelayMs() {
+        return blockchainFailureRetryDelayMs;
+    }
+
+    public void setBlockchainFailureRetryDelayMs(int blockchainFailureRetryDelayMs) {
+        this.blockchainFailureRetryDelayMs = blockchainFailureRetryDelayMs;
+    }
+
+    public boolean isDevAutoPayEnabled() {
+        return devAutoPayEnabled;
+    }
+
+    public void setDevAutoPayEnabled(boolean devAutoPayEnabled) {
+        this.devAutoPayEnabled = devAutoPayEnabled;
     }
 }

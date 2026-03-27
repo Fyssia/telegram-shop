@@ -33,7 +33,8 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
             select p from PaymentEntity p
             where p.provider = :provider
               and p.status in :statuses
-            order by p.createdAt asc, p.id asc
+              and (p.nextPollAt is null or p.nextPollAt <= CURRENT_TIMESTAMP)
+            order by coalesce(p.nextPollAt, p.createdAt) asc, p.id asc
             """)
     List<PaymentEntity> findForPolling(@Param("provider") String provider,
                                        @Param("statuses") Collection<PaymentStatus> statuses,
@@ -46,4 +47,13 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
             where p.id = :id
             """)
     Optional<PaymentEntity> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("""
+            select case when count(p) > 0 then true else false end
+            from PaymentEntity p
+            where p.order.id = :orderId
+              and p.status not in :inactiveStatuses
+            """)
+    boolean existsActivePaymentForOrder(@Param("orderId") Long orderId,
+                                        @Param("inactiveStatuses") Collection<PaymentStatus> inactiveStatuses);
 }

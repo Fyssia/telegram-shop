@@ -7,9 +7,10 @@
 2. Set required secrets:
    - `CRYPTOBOT_TESTNET_TOKEN`
    - `TON_WALLET_RECIPIENT_ADDRESS`
-   - `TON_WALLET_TONCENTER_API_KEY`
+   - `TON_WALLET_TONPAY_API_KEY` if your TON Pay environment requires it
    - `TG_TDLIB_API_ID`
    - `TG_TDLIB_API_HASH`
+   - `TG_TDLIB_PHONE_NUMBER`
    - `SPRING_DATASOURCE_*`
 3. Keep payment providers disabled until secrets/config are ready:
    - `CRYPTOBOT_TESTNET_ENABLED=false`
@@ -37,8 +38,19 @@ Both payment endpoints also enforce premium eligibility server-side for `giftPre
 
 - Premium validation uses TDLib credentials from `TG_TDLIB_API_ID` / `TG_TDLIB_API_HASH`.
 - As a fallback, the app also accepts `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` and `API_ID` / `API_HASH`.
-- Phone number can be set with `TG_TDLIB_PHONE_NUMBER` or `TDLIB_PHONE_NUMBER`.
+- Phone number must be configured with `TG_TDLIB_PHONE_NUMBER` or `TDLIB_PHONE_NUMBER`; console login fallback is disabled for server safety.
 - By default, TDLib is reserved for premium checks only because `TG_TDLIB_ENABLED_FOR_PUBLIC_CHECKS=false`.
+
+### TON Wallet Flow
+
+- TON wallet payments are prepared and reconciled through TON Pay.
+- `TON_WALLET_DEFAULT_CHAIN`, `TON_WALLET_MAINNET_RECIPIENT_ADDRESS`, `TON_WALLET_TESTNET_RECIPIENT_ADDRESS`,
+  `TON_WALLET_USDT_MAINNET_MASTER_ADDRESS`, `TON_WALLET_USDT_TESTNET_MASTER_ADDRESS`,
+  `TON_WALLET_TONPAY_MAINNET_BASE_URL`, `TON_WALLET_TONPAY_TESTNET_BASE_URL`, and `TON_WALLET_TONPAY_API_KEY`
+  control the chain-specific runtime.
+- `TON_WALLET_DEV_AUTO_PAY_ENABLED=true` enables the `ton_dev` checkout method to auto-mark payments as paid and
+  immediately trigger fulfillment. Keep it disabled outside local development.
+- Legacy Toncenter settings are no longer used by the payment flow.
 
 All other endpoints are denied by default in security config.
 

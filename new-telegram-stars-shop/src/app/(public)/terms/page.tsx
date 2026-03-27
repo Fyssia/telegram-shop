@@ -3,102 +3,114 @@ import { PAGES } from "@/config/pages.config";
 import { withLocalizedAlternates } from "@/i18n/metadata";
 import { getRequestLocale } from "@/i18n/server";
 import type { Locale } from "@/i18n/types";
-import styles from "../legal.module.scss";
+import LegalPage, { type LegalCopy } from "../legal-page";
 
-type Section = {
-  title: string;
-  body?: string;
-  list?: string[];
-};
-
-type TermsCopy = {
-  metaTitle: string;
-  metaDescription: string;
-  kicker: string;
-  title: string;
-  subtitle: string;
-  updatedAt: string;
-  sections: Section[];
-};
-
-const COPY: Record<Locale, TermsCopy> = {
+const COPY: Record<Locale, LegalCopy> = {
   en: {
-    metaTitle: "Terms",
+    metaTitle: "Terms of Service",
     metaDescription:
-      "Terms for using Telegram Stars checkout, payments, delivery, and support.",
+      "Terms for Telegram Stars checkout, order processing, delivery confirmation, and support.",
     kicker: "Legal",
     title: "Terms of service",
     subtitle:
-      "These terms explain how Stars checkout works, when delivery is considered complete, and how support handles disputes.",
-    updatedAt: "Updated: March 5, 2026",
+      "These terms explain how checkout, delivery confirmation, support, and misuse prevention work when you buy Telegram Stars through the service.",
+    updatedAt: "March 27, 2026",
     sections: [
       {
-        title: "1. Service scope",
-        body: "We provide access to Telegram Stars top-ups and related support. Orders are processed only after successful payment confirmation.",
+        id: "service-scope",
+        title: "Service scope",
+        body: "The service provides Telegram Stars top-ups and related order support. We may update availability, pricing, payment routes, or processing rules when required for operations, risk control, or provider changes.",
       },
       {
-        title: "2. Account responsibility",
-        body: "You are responsible for entering the correct Telegram @username before payment. Completed transfers to a valid username are considered delivered.",
+        id: "delivery",
+        title: "Order details and delivery",
+        body: "You must verify the Telegram @username before confirming payment. Delivery to the username submitted at checkout is treated as completed once our records show a successful transfer.",
       },
       {
-        title: "3. Delivery and timing",
+        id: "payments",
+        title: "Payment and order review",
         list: [
-          "Most orders are delivered within seconds.",
-          "During peak load delivery can take longer.",
-          "Order status and request ID are provided after submission.",
+          "Orders move into processing only after payment confirmation.",
+          "Pricing and fees shown at checkout apply to that order at the moment of payment.",
+          "We may pause, reject, or cancel orders that fail validation or trigger risk checks.",
         ],
       },
       {
-        title: "4. Prohibited use",
+        id: "timing",
+        title: "Timing and availability",
         list: [
-          "Fraudulent payments or chargeback abuse.",
-          "Automated abuse of checkout or referral flows.",
-          "Attempts to disrupt service availability.",
+          "Most deliveries complete quickly, but delays can happen during provider congestion, maintenance, or manual review.",
+          "After submission, the service provides an order status and request ID.",
+          "If your order remains unresolved, contact support with the request ID and a short description of the issue.",
         ],
       },
       {
-        title: "5. Support and disputes",
-        body: "If you have an issue, contact support and include your request ID. We investigate each case based on payment and delivery logs.",
+        id: "prohibited-use",
+        title: "Prohibited use",
+        list: [
+          "Fraudulent payments, chargeback abuse, or false claims.",
+          "Automated abuse of checkout, referral, or support flows.",
+          "Attempts to probe, overload, or disrupt service availability.",
+        ],
+      },
+      {
+        id: "support-disputes",
+        title: "Support and disputes",
+        body: "Support reviews disputes against payment, risk, and delivery logs. If the logs show a successful transfer to the submitted username, the order is usually treated as fulfilled.",
       },
     ],
   },
   ru: {
-    metaTitle: "Условия",
+    metaTitle: "Условия использования",
     metaDescription:
-      "Условия использования сервиса покупки звёзд Telegram, оплаты, доставки и поддержки.",
+      "Условия для оформления заказов на звёзды Telegram, подтверждения оплаты, доставки и поддержки.",
     kicker: "Документы",
     title: "Условия использования",
     subtitle:
-      "Здесь описано, как работает оформление заказа на звёзды, когда заказ считается доставленным и как поддержка обрабатывает спорные случаи.",
-    updatedAt: "Обновлено: 5 марта 2026",
+      "Здесь описано, как работают оформление заказа, подтверждение доставки, поддержка и защита от злоупотреблений при покупке звёзд Telegram через сервис.",
+    updatedAt: "27 марта 2026",
     sections: [
       {
-        title: "1. Объём сервиса",
-        body: "Мы предоставляем сервис покупки звёзд Telegram и поддержку. Заказ обрабатывается только после подтверждения оплаты.",
+        id: "service-scope",
+        title: "Объём сервиса",
+        body: "Сервис предоставляет покупку звёзд Telegram и сопровождение по заказам. Мы можем обновлять доступность, цены, платёжные маршруты и правила обработки, если это требуется для работы сервиса, контроля рисков или изменений у провайдеров.",
       },
       {
-        title: "2. Ответственность за аккаунт",
-        body: "Вы отвечаете за корректный Telegram @username до оплаты. Завершённый перевод на корректный @username считается доставкой.",
+        id: "delivery",
+        title: "Данные заказа и доставка",
+        body: "Перед подтверждением оплаты вы должны проверить Telegram @username. Доставка на @username, указанный при оформлении, считается завершённой, как только наши записи подтверждают успешный перевод.",
       },
       {
-        title: "3. Доставка и сроки",
+        id: "payments",
+        title: "Оплата и проверка заказа",
         list: [
-          "Большинство заказов доставляется за секунды.",
-          "В пиковую нагрузку доставка может занять больше времени.",
-          "После отправки вы получаете статус заказа и ID запроса.",
+          "Заказ переходит в обработку только после подтверждения оплаты.",
+          "Цена и комиссии, показанные в момент оформления, применяются к конкретному заказу в момент оплаты.",
+          "Мы можем приостановить, отклонить или отменить заказ, если он не проходит валидацию или попадает в риск-проверки.",
         ],
       },
       {
-        title: "4. Запрещённое использование",
+        id: "timing",
+        title: "Сроки и доступность",
         list: [
-          "Мошеннические оплаты и злоупотребление чарджбэками.",
-          "Автоматизированные злоупотребления формой заказа или реферальной системой.",
-          "Попытки нарушить доступность сервиса.",
+          "Большинство доставок завершается быстро, но задержки возможны из-за нагрузки у провайдера, техработ или ручной проверки.",
+          "После отправки сервис показывает статус заказа и ID запроса.",
+          "Если заказ долго остаётся неурегулированным, обратитесь в поддержку и приложите ID запроса с коротким описанием проблемы.",
         ],
       },
       {
-        title: "5. Поддержка и споры",
-        body: "Если возникла проблема, обратитесь в поддержку и укажите ID запроса. Мы проверяем каждый случай по платёжным логам и логам доставки.",
+        id: "prohibited-use",
+        title: "Запрещённое использование",
+        list: [
+          "Мошеннические оплаты, злоупотребление чарджбэками и ложные претензии.",
+          "Автоматизированные злоупотребления формой заказа, поддержкой или реферальными сценариями.",
+          "Попытки исследовать, перегружать или нарушать доступность сервиса.",
+        ],
+      },
+      {
+        id: "support-disputes",
+        title: "Поддержка и споры",
+        body: "Поддержка проверяет спорные случаи по платёжным, риск-логам и логам доставки. Если логи подтверждают успешный перевод на указанный @username, заказ обычно считается исполненным.",
       },
     ],
   },
@@ -121,39 +133,5 @@ export default async function TermsPage() {
   const locale = await getRequestLocale();
   const copy = COPY[locale];
 
-  return (
-    <main className={styles.legal}>
-      <section className={styles.legal__hero}>
-        <div className={styles.legal__heroBg} aria-hidden="true" />
-        <div className={styles.legal__heroInner}>
-          <p className={styles.legal__kicker}>{copy.kicker}</p>
-          <h1 className={styles.legal__title}>{copy.title}</h1>
-          <p className={styles.legal__subtitle}>{copy.subtitle}</p>
-        </div>
-      </section>
-
-      <section className={styles.legal__content}>
-        <div className={styles.legal__contentInner}>
-          <p className={styles.legal__meta}>{copy.updatedAt}</p>
-          {copy.sections.map((section) => (
-            <article key={section.title} className={styles.legal__section}>
-              <h2 className={styles.legal__sectionTitle}>{section.title}</h2>
-              {section.body ? (
-                <p className={styles.legal__sectionBody}>{section.body}</p>
-              ) : null}
-              {section.list ? (
-                <ul className={styles.legal__list}>
-                  {section.list.map((item) => (
-                    <li key={item} className={styles.legal__listItem}>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return <LegalPage locale={locale} documentKey="terms" copy={copy} />;
 }

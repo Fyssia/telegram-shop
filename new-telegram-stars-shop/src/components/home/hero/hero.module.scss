@@ -188,8 +188,9 @@
   list-style: none;
   padding: 0;
   margin: 2px 0 0;
-  display: flex;
-  flex-wrap: wrap;
+  width: min(100%, 420px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-content: center;
   gap: 10px;
 }
@@ -197,7 +198,9 @@
 .hero__badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  width: 100%;
   min-height: 40px;
   padding: 8px 12px;
   border-radius: var(--radius-pill);
@@ -208,6 +211,7 @@
   font-size: 14px;
   font-weight: 650;
   line-height: 1.2;
+  text-align: center;
 
   svg {
     width: 17px;
@@ -218,6 +222,13 @@
   span {
     opacity: 0.95;
   }
+}
+
+.hero__badge--support {
+  grid-column: 1 / -1;
+  width: fit-content;
+  max-width: 100%;
+  justify-self: center;
 }
 
 .hero__badge--instant svg {
@@ -232,6 +243,24 @@
   color: #9fc9ff;
 }
 
+@media (min-width: 760px) {
+  .hero__badges {
+    width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .hero__badge {
+    width: auto;
+    text-align: left;
+  }
+
+  .hero__badge--support {
+    width: auto;
+  }
+}
+
 @media (max-width: 480px) {
   .hero__subheading {
     max-width: 100%;
@@ -243,7 +272,13 @@
   }
 
   .hero__badges {
-    width: 100%;
-    justify-content: flex-start;
+    width: min(100%, 380px);
+    gap: 8px;
+  }
+
+  .hero__badge {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 13px;
   }
 }
