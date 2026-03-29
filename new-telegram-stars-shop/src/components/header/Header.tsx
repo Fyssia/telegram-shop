@@ -16,7 +16,6 @@ export default function Header() {
   const [mobilePanelTop, setMobilePanelTop] = useState<number | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
   const menuToggleRef = useRef<HTMLButtonElement | null>(null);
-
   const isMobileViewport = useCallback(
     () => window.matchMedia("(max-width: 960px)").matches,
     [],
@@ -149,19 +148,18 @@ export default function Header() {
       <div className={styles.header__inner}>
         <div className={styles.header__row}>
           <Logo />
-
-          <button
-            type="button"
-            className={styles.header__menuToggle}
-            aria-expanded={isMenuOpen}
-            aria-controls={panelId}
-            aria-label={
-              isMenuOpen ? messages.header.closeMenu : messages.header.openMenu
-            }
-            onClick={() => {
-              if (!isMenuOpen) {
-                updateMobilePanelTop();
-              }
+	  <button
+	  type="button"
+	  className={styles.header__menuToggle}
+	  aria-expanded={isMenuOpen}
+	  aria-controls={panelId}
+	  aria-label={
+		  isMenuOpen ? messages.header.closeMenu : messages.header.openMenu
+	  }
+	  onClick={() => {
+		  if (!isMenuOpen) {
+			  updateMobilePanelTop();
+		  }
 
               setIsMenuOpen((value) => !value);
             }}

@@ -6,6 +6,7 @@
     "dev": "next dev --webpack",
     "dev:turbopack": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/patch-standalone-runtime.cjs",
     "start": "next start",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",

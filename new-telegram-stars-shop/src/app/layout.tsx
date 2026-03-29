@@ -12,7 +12,6 @@ const appFont = Manrope({
   subsets: ["latin", "cyrillic"],
   display: "swap",
 });
-
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const { metadata } = await getDictionary();

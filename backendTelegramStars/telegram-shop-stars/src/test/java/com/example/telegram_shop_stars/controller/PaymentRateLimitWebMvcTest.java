@@ -36,7 +36,7 @@ class PaymentRateLimitWebMvcTest extends PaymentApiStandaloneTestSupport {
                   "starsAmount": 100,
                   "fulfillmentMethod": "buyStars",
                   "currencyType": "fiat",
-                  "amount": 1.600,
+                  "amount": 1.65,
                   "fiat": "USD",
                   "expiresIn": 300
                 }
@@ -85,7 +85,7 @@ class PaymentRateLimitWebMvcTest extends PaymentApiStandaloneTestSupport {
                   "username": "fyssia",
                   "starsAmount": 100,
                   "fulfillmentMethod": "buyStars",
-                  "amount": 1.600,
+                  "amount": 1.65,
                   "paymentMethod": "ton",
                   "senderAddress": "UQAjJzUBr5..."
                 }

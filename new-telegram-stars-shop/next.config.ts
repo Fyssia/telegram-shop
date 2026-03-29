@@ -13,6 +13,7 @@ const SEO_CACHE_CONTROL =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  skipProxyUrlNormalize: true,
   turbopack: {
     root: process.cwd(),
   },

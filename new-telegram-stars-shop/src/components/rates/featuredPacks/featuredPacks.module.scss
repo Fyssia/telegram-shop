@@ -253,15 +253,10 @@
   color: var(--color-white10);
 }
 
-.packCard__priceNote,
-.packCard__priceMeta {
+.packCard__priceNote {
   font-size: 14px;
   font-weight: 680;
   color: var(--color-gray-10);
-}
-
-.packCard__priceMeta {
-  opacity: 0.9;
 }
 
 .packCard__button {
@@ -317,7 +312,4 @@
     font-size: 14px;
   }
 
-  .packCard__priceMeta {
-    display: none;
-  }
 }

@@ -256,7 +256,6 @@ const en = {
           stars: "10,000 Stars",
           tag: "Starter",
           price: PACK_PRICE_10000,
-          bonus: "No hidden fees",
           description:
             "Perfect for recurring tips, giveaways, and team rewards. Delivered instantly after checkout.",
         },
@@ -264,7 +263,6 @@ const en = {
           stars: "15,000 Stars",
           tag: "Popular",
           price: PACK_PRICE_15000,
-          bonus: "+5% bonus",
           description:
             "Great for active creators and frequent campaigns. A balanced pack for steady usage.",
         },
@@ -272,7 +270,6 @@ const en = {
           stars: "20,000 Stars",
           tag: "Best value",
           price: PACK_PRICE_20000,
-          bonus: "+10% bonus",
           description:
             "Built for channels and communities with regular volume. Better value at scale.",
         },
@@ -280,7 +277,6 @@ const en = {
           stars: "25,000 Stars",
           tag: "Creator",
           price: PACK_PRICE_25000,
-          bonus: "Priority support",
           description:
             "For power users and businesses. Optimized for bulk purchases and frequent sending.",
         },
@@ -366,7 +362,7 @@ const en = {
     },
     featuredPacks: {
       title: "Featured packs",
-      subtitle: "Transparent pricing • Bonus tiers for bulk orders",
+      subtitle: "Transparent pricing for every order size",
       instantDelivery: "Transparent pricing",
       selectPack: "Choose pack",
       detailsSuffix: "details",
@@ -382,7 +378,6 @@ const en = {
           pill: "Popular",
           price: PACK_PRICE_10000,
           priceNote: "approx.",
-          priceMeta: "includes bonus",
           features: [
             "Great for giveaways",
             "Best value tier",
@@ -394,7 +389,6 @@ const en = {
           pill: "Quick",
           price: PACK_PRICE_15000,
           priceNote: "approx.",
-          priceMeta: "includes bonus",
           features: [
             "Best for tips & small rewards",
             "Balanced monthly top-ups",
@@ -408,7 +402,6 @@ const en = {
           pill: "Events",
           price: PACK_PRICE_20000,
           priceNote: "approx.",
-          priceMeta: "includes bonus",
           features: [
             "Perfect for events",
             "Flexible payment options",
@@ -420,7 +413,6 @@ const en = {
           pill: "Bulk",
           price: PACK_PRICE_25000,
           priceNote: "approx.",
-          priceMeta: "includes bonus",
           features: [
             "Campaign-ready pack",
             "Reporting-friendly receipts",
@@ -936,7 +928,6 @@ const ru: Messages = {
           stars: "10 000 звёзд",
           tag: "Старт",
           price: PACK_PRICE_10000,
-          bonus: "Без скрытых комиссий",
           description:
             "Подходит для регулярной поддержки авторов, розыгрышей и наград команде. Доставка — сразу после оплаты.",
         },
@@ -944,7 +935,6 @@ const ru: Messages = {
           stars: "15 000 звёзд",
           tag: "Популярный",
           price: PACK_PRICE_15000,
-          bonus: "+5% бонус",
           description:
             "Отличный выбор для активных авторов и частых кампаний. Сбалансированный пакет для постоянного использования.",
         },
@@ -952,7 +942,6 @@ const ru: Messages = {
           stars: "20 000 звёзд",
           tag: "Лучшая цена",
           price: PACK_PRICE_20000,
-          bonus: "+10% бонус",
           description:
             "Хороший вариант для каналов и сообществ с регулярной активностью. Чем больше объём, тем выгоднее цена.",
         },
@@ -960,7 +949,6 @@ const ru: Messages = {
           stars: "25 000 звёзд",
           tag: "Для авторов",
           price: PACK_PRICE_25000,
-          bonus: "Приоритетная поддержка",
           description:
             "Для активных авторов и команд. Оптимален для крупных и регулярных покупок.",
         },
@@ -1046,7 +1034,7 @@ const ru: Messages = {
     },
     featuredPacks: {
       title: "Рекомендуемые пакеты",
-      subtitle: "Прозрачные цены • Бонусы для крупных заказов",
+      subtitle: "Прозрачные цены для заказов любого объёма",
       instantDelivery: "Прозрачные цены",
       selectPack: "Выбрать пакет",
       detailsSuffix: "детали",
@@ -1062,7 +1050,6 @@ const ru: Messages = {
           pill: "Популярный",
           price: PACK_PRICE_10000,
           priceNote: "примерно",
-          priceMeta: "включая бонус",
           features: [
             "Отлично для розыгрышей",
             "Лучший уровень цены",
@@ -1074,7 +1061,6 @@ const ru: Messages = {
           pill: "Быстро",
           price: PACK_PRICE_15000,
           priceNote: "примерно",
-          priceMeta: "включая бонус",
           features: [
             "Лучше всего для поддержки авторов и небольших наград",
             "Сбалансировано для регулярных пополнений",
@@ -1088,7 +1074,6 @@ const ru: Messages = {
           pill: "События",
           price: PACK_PRICE_20000,
           priceNote: "примерно",
-          priceMeta: "включая бонус",
           features: [
             "Идеально для событий",
             "Гибкие способы оплаты",
@@ -1100,7 +1085,6 @@ const ru: Messages = {
           pill: "Опт",
           price: PACK_PRICE_25000,
           priceNote: "примерно",
-          priceMeta: "включая бонус",
           features: [
             "Пакет для кампаний",
             "Чеки удобны для отчётности",

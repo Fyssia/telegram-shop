@@ -12,6 +12,7 @@ import {
 import { LANGUAGE_COOKIE } from "@/i18n/types";
 
 const INTERNAL_LOCALE_REWRITE_HEADER = "x-internal-locale-rewrite";
+const DEFAULT_INTERNAL_PROXY_PORT = "3000";
 
 function withLeadingSlash(pathname: string) {
   if (!pathname.startsWith("/")) {
@@ -31,6 +32,23 @@ function shouldBypassMiddleware(pathname: string) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml"
   );
+}
+
+function resolveInternalRewriteUrl(
+  request: NextRequest,
+  pathname: string,
+): URL {
+  if (process.env.NODE_ENV !== "production") {
+    const internalUrl = request.nextUrl.clone();
+    internalUrl.pathname = pathname;
+    return internalUrl;
+  }
+
+  const configuredOrigin =
+    process.env.INTERNAL_SITE_ORIGIN?.trim() ||
+    `http://127.0.0.1:${process.env.PORT?.trim() || DEFAULT_INTERNAL_PROXY_PORT}`;
+
+  return new URL(pathname, configuredOrigin);
 }
 
 export function proxy(request: NextRequest) {
@@ -85,8 +103,10 @@ export function proxy(request: NextRequest) {
   requestHeaders.set(LOCALE_REQUEST_HEADER, localeMatch.locale);
   requestHeaders.set(INTERNAL_LOCALE_REWRITE_HEADER, "1");
 
-  const rewriteUrl = request.nextUrl.clone();
-  rewriteUrl.pathname = withLeadingSlash(localeMatch.pathname);
+  const rewriteUrl = resolveInternalRewriteUrl(
+    request,
+    withLeadingSlash(localeMatch.pathname),
+  );
 
   const response = NextResponse.rewrite(rewriteUrl, {
     request: {

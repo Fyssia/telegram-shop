@@ -16,7 +16,6 @@ type Pack = {
   iconTone: "primary" | "star";
   tone: PackTone;
   priceNote: string;
-  priceMeta?: string;
   features: string[];
 };
 
@@ -24,7 +23,6 @@ type PackTextCopy = {
   title: string;
   pill: string;
   priceNote: string;
-  priceMeta?: string;
   features: string[];
 };
 
@@ -38,7 +36,6 @@ const PACKS_TOP_ROW: Pack[] = [
     iconTone: "primary",
     tone: "highlightBlue",
     priceNote: "approx.",
-    priceMeta: "includes bonus",
     features: [
       "Great for giveaways",
       "Best value tier",
@@ -54,7 +51,6 @@ const PACKS_TOP_ROW: Pack[] = [
     iconTone: "star",
     tone: "neutral",
     priceNote: "approx.",
-    priceMeta: "includes bonus",
     features: [
       "Best for tips & small rewards",
       "Balanced monthly top-ups",
@@ -73,7 +69,6 @@ const PACKS_BOTTOM_ROW: Pack[] = [
     iconTone: "star",
     tone: "neutral",
     priceNote: "approx.",
-    priceMeta: "includes bonus",
     features: [
       "Perfect for events",
       "Flexible payment options",
@@ -89,7 +84,6 @@ const PACKS_BOTTOM_ROW: Pack[] = [
     iconTone: "star",
     tone: "highlightGold",
     priceNote: "approx.",
-    priceMeta: "includes bonus",
     features: [
       "Campaign-ready pack",
       "Reporting-friendly receipts",
@@ -162,9 +156,6 @@ function PackCard({
           {formatPackPriceUsd(pack.amount)}
         </p>
         <span className={styles.packCard__priceNote}>{pack.priceNote}</span>
-        {pack.priceMeta ? (
-          <span className={styles.packCard__priceMeta}>{pack.priceMeta}</span>
-        ) : null}
       </div>
 
       <LocalizedLink
@@ -189,7 +180,6 @@ function mergePackRows(base: Pack[], copy: readonly PackTextCopy[]): Pack[] {
       title: localized.title,
       pill: localized.pill,
       priceNote: localized.priceNote,
-      priceMeta: localized.priceMeta,
       features: localized.features,
     };
   });

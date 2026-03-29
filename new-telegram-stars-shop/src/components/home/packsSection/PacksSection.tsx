@@ -15,8 +15,6 @@ type PackCard = {
   stars: string;
   tag: string;
   tagTone: "muted" | "primary" | "star";
-  bonus: string;
-  bonusTone: "muted" | "star";
   description: string;
   icon: "star" | "sparkles" | "rocket" | "crown";
   iconTone: "star" | "primary";
@@ -29,8 +27,6 @@ const PACKS: PackCard[] = [
     stars: "10,000 Stars",
     tag: "Starter",
     tagTone: "muted",
-    bonus: "No hidden fees",
-    bonusTone: "muted",
     description:
       "Perfect for recurring tips, giveaways, and team rewards. Delivered instantly after checkout.",
     icon: "star",
@@ -42,8 +38,6 @@ const PACKS: PackCard[] = [
     stars: "15,000 Stars",
     tag: "Popular",
     tagTone: "primary",
-    bonus: "+5% bonus",
-    bonusTone: "star",
     description:
       "Great for active creators and frequent campaigns. A balanced pack for steady usage.",
     icon: "sparkles",
@@ -55,8 +49,6 @@ const PACKS: PackCard[] = [
     stars: "20,000 Stars",
     tag: "Best value",
     tagTone: "star",
-    bonus: "+10% bonus",
-    bonusTone: "star",
     description:
       "Built for channels and communities with regular volume. Better value at scale.",
     icon: "rocket",
@@ -68,8 +60,6 @@ const PACKS: PackCard[] = [
     stars: "25,000 Stars",
     tag: "Creator",
     tagTone: "primary",
-    bonus: "Priority support",
-    bonusTone: "muted",
     description:
       "For power users and businesses. Optimized for bulk purchases and frequent sending.",
     icon: "crown",
@@ -98,7 +88,6 @@ export default async function PacksSection() {
       ...pack,
       stars: copy.stars,
       tag: copy.tag,
-      bonus: copy.bonus,
       description: copy.description,
     };
   });
@@ -154,16 +143,6 @@ export default async function PacksSection() {
                 <p className={styles.packs__price}>
                   {formatPackPriceUsd(pack.amount)}
                 </p>
-                <span
-                  className={[
-                    styles.packs__bonus,
-                    pack.bonusTone === "star"
-                      ? styles["packs__bonus--star"]
-                      : styles["packs__bonus--muted"],
-                  ].join(" ")}
-                >
-                  {pack.bonus}
-                </span>
               </div>
 
               <p className={styles.packs__desc}>{pack.description}</p>

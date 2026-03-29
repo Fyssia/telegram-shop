@@ -129,6 +129,211 @@ const PREMIUM_DURATION_PRICES_USD: Record<PremiumDurationValue, number> = {
 const ORDER_POLL_INTERVAL_MS = 5_000;
 const ORDER_POLL_MAX_DURATION_MS = 15 * 60_000;
 const DEV_PAYMENT_METHOD_ENABLED = process.env.NODE_ENV !== "production";
+const SPLIT_PAYMENT_METHOD_ICON_SRC: Partial<Record<PaymentMethodValue, string>> =
+  {
+    ton: "/payment-methods/split/ton.svg",
+    ton_dev: "/payment-methods/split/tondev.png",
+    usdt_ton: "/payment-methods/split/usdt.svg",
+    usdt_trc20: "/payment-methods/split/usdt.svg",
+    // split.tg uses xRocket artwork instead of a dedicated Crypto Bot icon.
+    crypto_bot: "/payment-methods/split/xrocket.svg",
+  };
+
+function getSplitPaymentMethodIconSrc(method: PaymentMethodValue) {
+  return SPLIT_PAYMENT_METHOD_ICON_SRC[method] ?? null;
+}
+
+function PaymentMethodGlyph({ method }: { method: PaymentMethodValue }) {
+  const splitIconSrc = getSplitPaymentMethodIconSrc(method);
+
+  if (splitIconSrc) {
+    return (
+      <img
+        src={splitIconSrc}
+        alt=""
+        className={styles.checkout__paymentMethodImage}
+        decoding="async"
+        draggable={false}
+      />
+    );
+  }
+
+  if (method === "usdt_ton" || method === "usdt_trc20") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        focusable="false"
+        aria-hidden="true"
+      >
+        <path
+          d="M6.1 6.45h11.8"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9.2 6.45V4.95h5.6v1.5"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 6.85v9.55"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          d="M7.95 9.8c1.28.7 2.63 1.04 4.05 1.04s2.77-.34 4.05-1.04"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          d="M8.7 10.45v1.72c0 .83 1.48 1.49 3.3 1.49s3.3-.66 3.3-1.49v-1.72"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (method === "crypto_bot") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        focusable="false"
+        aria-hidden="true"
+      >
+        <path
+          d="M9.15 7.3V6.45a2.85 2.85 0 0 1 5.7 0v.85"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <rect
+          x="5.35"
+          y="7.8"
+          width="13.3"
+          height="9.1"
+          rx="4.25"
+          stroke="currentColor"
+          strokeWidth="1.9"
+        />
+        <circle cx="9.5" cy="12.25" r="1.15" fill="currentColor" />
+        <circle cx="14.5" cy="12.25" r="1.15" fill="currentColor" />
+        <path
+          d="M10.05 14.95c.52.31 1.17.46 1.95.46s1.43-.15 1.95-.46"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (method === "fiat") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        focusable="false"
+        aria-hidden="true"
+      >
+        <rect
+          x="4.6"
+          y="6.5"
+          width="14.8"
+          height="10.8"
+          rx="3.25"
+          stroke="currentColor"
+          strokeWidth="1.9"
+        />
+        <path
+          d="M4.95 10.15h14.1"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          d="M8.05 14.15h3.3"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (method === "ton_wallet") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        focusable="false"
+        aria-hidden="true"
+      >
+        <path
+          d="M6.95 8.05h9.85a2.75 2.75 0 0 1 2.75 2.75v2.85a2.75 2.75 0 0 1-2.75 2.75h-9.6a2.75 2.75 0 0 1-2.75-2.75v-3.1a2.5 2.5 0 0 1 2.5-2.5Z"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M6.7 8.05v-.4a1.7 1.7 0 0 1 1.7-1.7h7.15"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          d="M15.2 12.25h2.1"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      focusable="false"
+      aria-hidden="true"
+    >
+      <path d="M12 3.8 6.45 8.58a.72.72 0 0 0-.14.9L11.44 18a.64.64 0 0 0 1.12 0l5.13-8.52a.72.72 0 0 0-.14-.9z" />
+      <path
+        d="M12 7.3 9.23 9.66h5.54z"
+        fill={
+          method === "ton_dev"
+            ? "rgba(255,255,255,0.78)"
+            : "rgba(255,255,255,0.88)"
+        }
+      />
+    </svg>
+  );
+}
+
+function getPaymentMethodMarkerTone(
+  method: PaymentMethodValue,
+): "cyan" | "rose" | "violet" | null {
+  if (getSplitPaymentMethodIconSrc(method)) return null;
+  if (method === "usdt_ton") return "cyan";
+  if (method === "usdt_trc20") return "rose";
+  if (method === "ton_dev") return "violet";
+  return null;
+}
 
 function PaymentMethodIcon({
   method,
@@ -137,119 +342,26 @@ function PaymentMethodIcon({
   method: PaymentMethodValue;
   className?: string;
 }) {
-  if (method === "usdt_ton" || method === "usdt_trc20") {
-    return (
-      <span
-        className={`${styles.checkout__paymentMethodIcon} ${className ?? ""}`.trim()}
-        data-method={method}
-        aria-hidden="true"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          focusable="false"
-        >
-          <path
-            d="M5 6.25h14"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <path
-            d="M9 6.25V4.75h6v1.5"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M12 6.5v10"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <path
-            d="M7.5 9.75c1.42.77 2.93 1.15 4.5 1.15s3.08-.38 4.5-1.15"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <path
-            d="M8.35 10.4v2.02c0 .96 1.63 1.73 3.65 1.73s3.65-.77 3.65-1.73V10.4"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-    );
-  }
-
-  if (method === "crypto_bot") {
-    return (
-      <span
-        className={`${styles.checkout__paymentMethodIcon} ${className ?? ""}`.trim()}
-        data-method={method}
-        aria-hidden="true"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          focusable="false"
-        >
-          <path
-            d="M9.25 7.25V6a2.75 2.75 0 0 1 5.5 0v1.25"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <rect
-            x="5.75"
-            y="7.75"
-            width="12.5"
-            height="9.5"
-            rx="4"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          />
-          <circle cx="9.5" cy="12.5" r="1.1" fill="currentColor" />
-          <circle cx="14.5" cy="12.5" r="1.1" fill="currentColor" />
-          <path
-            d="M10 15.15c.55.32 1.2.48 2 .48s1.45-.16 2-.48"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      </span>
-    );
-  }
+  const splitIconSrc = getSplitPaymentMethodIconSrc(method);
+  const markerTone = getPaymentMethodMarkerTone(method);
 
   return (
     <span
       className={`${styles.checkout__paymentMethodIcon} ${className ?? ""}`.trim()}
       data-method={method}
+      data-source={splitIconSrc ? "split" : "local"}
+      data-marker={markerTone ?? "none"}
       aria-hidden="true"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        focusable="false"
-      >
-        <path d="M12 3.8 6.45 8.58a.72.72 0 0 0-.14.9L11.44 18a.64.64 0 0 0 1.12 0l5.13-8.52a.72.72 0 0 0-.14-.9z" />
-        <path
-          d="M12 7.3 9.23 9.66h5.54z"
-          fill={
-            method === "ton_dev"
-              ? "rgba(255,255,255,0.82)"
-              : "rgba(255,255,255,0.88)"
-          }
+      <span className={styles.checkout__paymentMethodGlyph}>
+        <PaymentMethodGlyph method={method} />
+      </span>
+      {markerTone ? (
+        <span
+          className={styles.checkout__paymentMethodMarker}
+          data-tone={markerTone}
         />
-      </svg>
+      ) : null}
     </span>
   );
 }

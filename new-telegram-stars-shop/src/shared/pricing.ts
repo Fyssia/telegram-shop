@@ -1,5 +1,7 @@
-const HALF_MILLS_PER_STAR = 32;
+const HALF_MILLS_PER_STAR = 33;
 const HALF_MILLS_PER_USD = 2_000;
+const HALF_MILLS_PER_CENT = 20;
+const CENTS_PER_USD = 100;
 
 const PRICE_NUMBER_FORMAT_LOCALE = {
   en: "en-US",
@@ -9,9 +11,12 @@ const PRICE_NUMBER_FORMAT_LOCALE = {
 type PriceLocale = keyof typeof PRICE_NUMBER_FORMAT_LOCALE;
 
 export function resolveStarsAmountUsd(starsAmount: number) {
-  return Number(
-    ((starsAmount * HALF_MILLS_PER_STAR) / HALF_MILLS_PER_USD).toFixed(3),
+  const totalHalfMills = starsAmount * HALF_MILLS_PER_STAR;
+  const totalCents = Math.floor(
+    (totalHalfMills + HALF_MILLS_PER_CENT / 2) / HALF_MILLS_PER_CENT,
   );
+
+  return totalCents / CENTS_PER_USD;
 }
 
 export function formatUsdAmount(

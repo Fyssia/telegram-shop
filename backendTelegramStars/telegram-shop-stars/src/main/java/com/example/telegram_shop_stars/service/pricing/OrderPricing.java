@@ -14,10 +14,10 @@ public final class OrderPricing {
     public static final int STARS_MIN_AMOUNT = 50;
     public static final int STARS_MAX_AMOUNT = 25_000;
     public static final int STARS_STEP = 50;
-    public static final int MONEY_SCALE = 3;
+    public static final int MONEY_SCALE = 2;
     public static final int UNIT_PRICE_SCALE = 4;
 
-    private static final BigDecimal STARS_UNIT_PRICE_USD = new BigDecimal("0.016");
+    private static final BigDecimal STARS_UNIT_PRICE_USD = new BigDecimal("0.0165");
     private static final Map<Integer, BigDecimal> PREMIUM_MONTH_PRICES_USD = Map.of(
             3, new BigDecimal("12.99"),
             6, new BigDecimal("23.99"),
@@ -62,6 +62,10 @@ public final class OrderPricing {
     }
 
     public static BigDecimal resolveUnitPriceAmount(String fulfillmentMethod, int quantity) {
+        if (FULFILLMENT_BUY_STARS.equals(fulfillmentMethod)) {
+            return STARS_UNIT_PRICE_USD.setScale(UNIT_PRICE_SCALE, RoundingMode.HALF_UP);
+        }
+
         return expectedTotalAmountUsd(fulfillmentMethod, quantity).divide(
                 BigDecimal.valueOf(quantity),
                 UNIT_PRICE_SCALE,

@@ -48,7 +48,7 @@ class PaymentApiContractWebMvcTest extends PaymentApiStandaloneTestSupport {
                                   "starsAmount": 100,
                                   "fulfillmentMethod": "buyStars",
                                   "currencyType": "fiat",
-                                  "amount": 1.600,
+                                  "amount": 1.65,
                                   "fiat": "USD",
                                   "expiresIn": 300
                                 }
@@ -68,7 +68,7 @@ class PaymentApiContractWebMvcTest extends PaymentApiStandaloneTestSupport {
         assertThat(cryptoBotPaymentService.lastRequest.starsAmount()).isEqualTo(100);
         assertThat(cryptoBotPaymentService.lastRequest.fulfillmentMethod()).isEqualTo("buyStars");
         assertThat(cryptoBotPaymentService.lastRequest.currencyType()).isEqualTo("fiat");
-        assertThat(cryptoBotPaymentService.lastRequest.amount()).isEqualByComparingTo(new BigDecimal("1.600"));
+        assertThat(cryptoBotPaymentService.lastRequest.amount()).isEqualByComparingTo(new BigDecimal("1.65"));
         assertThat(cryptoBotPaymentService.lastRequest.fiat()).isEqualTo("USD");
         assertThat(cryptoBotPaymentService.lastRequest.expiresIn()).isEqualTo(300);
     }
@@ -105,7 +105,7 @@ class PaymentApiContractWebMvcTest extends PaymentApiStandaloneTestSupport {
                                   "username": "fyssia",
                                   "starsAmount": 100,
                                   "fulfillmentMethod": "buyStars",
-                                  "amount": 1.600,
+                                  "amount": 1.65,
                                   "paymentMethod": "ton",
                                   "senderAddress": "UQAjJzUBr5..."
                                 }
@@ -123,7 +123,7 @@ class PaymentApiContractWebMvcTest extends PaymentApiStandaloneTestSupport {
         assertThat(tonWalletPaymentService.lastRequest.username()).isEqualTo("fyssia");
         assertThat(tonWalletPaymentService.lastRequest.starsAmount()).isEqualTo(100);
         assertThat(tonWalletPaymentService.lastRequest.fulfillmentMethod()).isEqualTo("buyStars");
-        assertThat(tonWalletPaymentService.lastRequest.amount()).isEqualByComparingTo(new BigDecimal("1.600"));
+        assertThat(tonWalletPaymentService.lastRequest.amount()).isEqualByComparingTo(new BigDecimal("1.65"));
         assertThat(tonWalletPaymentService.lastRequest.paymentMethod()).isEqualTo("ton");
         assertThat(tonWalletPaymentService.lastRequest.senderAddress()).isEqualTo("UQAjJzUBr5...");
     }
@@ -141,7 +141,7 @@ class PaymentApiContractWebMvcTest extends PaymentApiStandaloneTestSupport {
                                   "username": "fyssia",
                                   "starsAmount": 100,
                                   "fulfillmentMethod": "buyStars",
-                                  "amount": 1.600
+                                  "amount": 1.65
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
@@ -168,7 +168,7 @@ class PaymentApiContractWebMvcTest extends PaymentApiStandaloneTestSupport {
                                   "username": "fyssia",
                                   "starsAmount": 100,
                                   "fulfillmentMethod": "buyStars",
-                                  "amount": 1.600,
+                                  "amount": 1.65,
                                   "paymentMethod": "ton",
                                   "senderAddress": "UQAjJzUBr5..."
                                 }

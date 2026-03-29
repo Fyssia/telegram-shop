@@ -177,13 +177,7 @@
 .packs__priceRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-
-  @media (max-width: 480px) {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
 }
 
 .packs__price {
@@ -199,28 +193,6 @@
   @media (max-width: 960px) {
     font-size: 28px;
   }
-}
-
-.packs__bonus {
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: var(--border);
-  background-color: #0b1b2f;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-
-  @media (max-width: 960px) {
-    font-size: 14px;
-  }
-}
-
-.packs__bonus--muted {
-  color: var(--color-gray-10);
-}
-
-.packs__bonus--star {
-  color: var(--color-yellow10);
 }
 
 .packs__desc {
